@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="100"
+        x:Class="HalfLife.UnifiedSdk.MapDecompiler.GUI.Views.CancelJobsDialog"
+        Title="Cancel Jobs?"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen">
+    <Grid ColumnDefinitions="*, Auto, Auto"
+          RowDefinitions="Auto, Auto"
+          Margin="10">
+        <TextBlock Grid.Column="0" Grid.ColumnSpan="3"
+                   Grid.Row="0"
+                   Text="Do you want to cancel active jobs?"/>
+        
+        <Button Grid.Column="1"
+                Grid.Row="1"
+                Content="Yes" Command="{Binding YesCommand}"/>
+
+        <Button Grid.Column="2"
+                Grid.Row="1"
+                Content="Cancel" Command="{Binding CancelCommand}"
+                IsDefault="True"/>
+    </Grid>
+</Window>

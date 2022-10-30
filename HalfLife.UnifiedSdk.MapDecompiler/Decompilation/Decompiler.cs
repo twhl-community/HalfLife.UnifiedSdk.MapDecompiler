@@ -1,0 +1,1099 @@
+﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
+using Serilog;
+using Sledge.Formats.Bsp;
+using Sledge.Formats.Bsp.Lumps;
+using Sledge.Formats.Bsp.Objects;
+using Sledge.Formats.Map.Objects;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Numerics;
+using System.Text.RegularExpressions;
+using BspFace = Sledge.Formats.Bsp.Objects.Face;
+using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
+using BspVersion = Sledge.Formats.Bsp.Version;
+using MapEntity = Sledge.Formats.Map.Objects.Entity;
+
+namespace HalfLife.UnifiedSdk.MapDecompiler
+{
+    public sealed partial class Decompiler
+    {
+        private const int PlaneHashes = 1024;
+        private const int MaxRange = 4096;
+        private const int MaxMapBounds = 65535;
+        private const int MaxMapFileBrushes = 65535;
+        private const int MaxMapFileBrushSides = MaxMapFileBrushes * 8;
+        private const int MaxMapBrushSides = 65536;
+
+        private const int TexInfoNode = -1; //side is allready on a node
+
+        private readonly ILogger _logger;
+        private readonly BspFile _bspFile;
+        private readonly DecompilerOptions _options;
+
+        private readonly Planes _bspPlanes;
+        private readonly Faces _bspFaces;
+        private readonly Nodes _bspNodes;
+        private readonly Texinfo _bspTexInfo;
+        private readonly Textures _bspTextures;
+        private readonly Surfedges _bspSurfedges;
+        private readonly Edges _bspEdges;
+        private readonly Vertices _bspVertices;
+        private readonly Leaves _bspLeaves;
+        private readonly Entities _bspEntities;
+        private readonly Models _bspModels;
+
+        private Vector3 _mapMins;
+        private Vector3 _mapMaxs;
+
+        private readonly HashedPlane[] _planehashes = new HashedPlane[PlaneHashes];
+
+        private readonly ImmutableDictionary<int, string> _textureNameMap;
+
+        private int _numMapBrushes;
+        private int _numMapBrushSides;
+        private int _numClipBrushes;
+
+        private readonly int _originTextureIndex;
+
+        private Decompiler(ILogger logger, BspFile bspFile, DecompilerOptions options)
+        {
+            _logger = logger;
+            _bspFile = bspFile;
+            _options = options;
+
+            // Cache lumps to avoid lookup overhead.
+            _bspPlanes = _bspFile.Planes;
+            _bspFaces = _bspFile.Faces;
+            _bspNodes = _bspFile.Nodes;
+            _bspTexInfo = _bspFile.Texinfo;
+            _bspTextures = _bspFile.Textures;
+            _bspSurfedges = _bspFile.Surfedges;
+            _bspEdges = _bspFile.Edges;
+            _bspVertices = _bspFile.Vertices;
+            _bspLeaves = _bspFile.Leaves;
+            _bspEntities = _bspFile.Entities;
+            _bspModels = _bspFile.Models;
+
+            // Add existing planes to hash.
+            foreach (var plane in _bspPlanes)
+            {
+                AddPlaneToHash(plane);
+            }
+
+            // Add ORIGIN texture to textures.
+            var originTexture = _bspTextures.FirstOrDefault(t => t.Name.Equals("ORIGIN", StringComparison.OrdinalIgnoreCase));
+
+            if (originTexture is null)
+            {
+                originTexture = new()
+                {
+                    Name = "ORIGIN",
+                };
+
+                _bspTextures.Add(originTexture);
+            }
+
+            _originTextureIndex = _bspTextures.IndexOf(originTexture);
+
+            // Cache the texture name lookup map
+            _textureNameMap = _bspTexInfo
+                .Select((t, i) => new { TexInfo = t, Index = i })
+                .ToImmutableDictionary(t => t.Index, t => _bspTextures[t.TexInfo.MipTexture].Name);
+        }
+
+        public static MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(bspFile);
+            ArgumentNullException.ThrowIfNull(options);
+
+            if (bspFile.Version != BspVersion.Goldsource)
+            {
+                throw new ArgumentException("BSP version not supported", nameof(bspFile));
+            }
+
+            if (bspFile.Entities.Count == 0)
+            {
+                throw new ArgumentException("BSP has no entities", nameof(bspFile));
+            }
+
+            var decompiler = new Decompiler(logger, bspFile, options);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return decompiler.DecompileCore(cancellationToken);
+        }
+
+        private MapFile DecompileCore(CancellationToken cancellationToken)
+        {
+            Debug.Assert(_bspEntities[0].ClassName == "worldspawn");
+
+            if (_options.MergeBrushes)
+            {
+                _logger.Information("Merging brushes");
+            }
+            else
+            {
+                _logger.Information("Not merging brushes");
+            }
+
+            switch (_options.BrushOptimization)
+            {
+                case BrushOptimization.BestTextureMatch:
+                    _logger.Information("Optimizing for texture placement");
+                    break;
+                case BrushOptimization.FewestBrushes:
+                    _logger.Information("Optimizing for fewest brushes");
+                    break;
+            }
+
+            if (!_options.IncludeLiquids)
+            {
+                _logger.Information("Excluding brushes with liquid content types (water, slime, lava)");
+            }
+
+            MapFile mapFile = new();
+
+            static Dictionary<string, string> CopyKeyValues(Dictionary<string, string> keyValues)
+            {
+                var copy = keyValues.ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                copy.Remove("classname");
+
+                return copy;
+            }
+
+            mapFile.Worldspawn.Properties = CopyKeyValues(_bspEntities[0].KeyValues);
+
+            mapFile.Worldspawn.Children.AddRange(_bspEntities.Skip(1).Select(e => new MapEntity
+            {
+                ClassName = e.ClassName,
+                Properties = CopyKeyValues(e.KeyValues)
+            }));
+
+            List<DecompiledEntity> entities = new()
+            {
+                new DecompiledEntity(0, mapFile.Worldspawn)
+            };
+
+            entities.AddRange(mapFile.Worldspawn.Children.Cast<MapEntity>().Select((e, i) => new DecompiledEntity(i + 1, e)));
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            foreach (var entity in entities)
+            {
+                int modelNumber = 0;
+
+                if (entity.Entity.ClassName != "worldspawn")
+                {
+                    if (!entity.Entity.Properties.TryGetValue("model", out var model) || !model.StartsWith("*"))
+                    {
+                        continue;
+                    }
+
+                    _ = int.TryParse(model.AsSpan()[1..], out modelNumber);
+
+                    //don't write BSP model numbers
+                    entity.Entity.Properties.Remove("model");
+                }
+
+                CreateMapBrushes(entity, modelNumber);
+
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            _logger.Information("{Count} map brushes", _numMapBrushes);
+            _logger.Information("{Count} clip brushes", _numClipBrushes);
+
+            return mapFile;
+        }
+
+        private void CreateMapBrushes(DecompiledEntity entity, int modelNumber)
+        {
+            //create brushes from the model BSP tree
+            List<BspBrush> brushlist = CreateBrushesFromBSP(modelNumber);
+            //texture the brushes and split them when necesary
+            brushlist = TextureBrushes(brushlist, modelNumber);
+            //fix the contents textures of all brushes
+            FixContentsTextures(brushlist);
+
+            if (_options.MergeBrushes)
+            {
+                brushlist = MergeBrushes(brushlist, modelNumber);
+            }
+
+            if (modelNumber == 0)
+            {
+                _logger.Information("converting brushes to map brushes");
+            }
+
+            var origin = Vector3.Zero;
+
+            if (entity.Entity.Properties.TryGetValue("origin", out var value))
+            {
+                var components = Regex.Split(value, @"\s+");
+
+                Span<float> componentValues = stackalloc float[3];
+
+                for (int i = 0; i < 3 && i < components.Length; ++i)
+                {
+                    _ = float.TryParse(components[i], out componentValues[i]);
+                }
+
+                origin.X = componentValues[0];
+                origin.Y = componentValues[1];
+                origin.Z = componentValues[2];
+            }
+
+            foreach (var brush in brushlist)
+            {
+                BSPBrushToMapBrush(brush, entity, origin);
+            }
+
+            if (brushlist.Count > 0 && origin != Vector3.Zero)
+            {
+                AddOriginBrush(entity, origin);
+            }
+
+            if (modelNumber == 0)
+            {
+                _logger.Information("{Count} brushes", brushlist.Count);
+            }
+        }
+
+        private int FindFloatPlane(Vector3 normal, float dist)
+        {
+            MathUtilities.SnapPlane(normal, ref dist);
+            int hash = (int)MathF.Abs(dist) / 8;
+            hash &= (PlaneHashes - 1);
+
+            // search the border bins as well
+            for (int i = -1; i <= 1; i++)
+            {
+                int h = (hash + i) & (PlaneHashes - 1);
+                for (var p = _planehashes[h]; p is not null; p = p.Chain)
+                {
+                    if (MathUtilities.PlaneEqual(p.Plane, normal, dist))
+                    {
+                        var index = _bspPlanes.IndexOf(p.Plane);
+
+                        Debug.Assert(index != -1);
+
+                        return index;
+                    }
+                }
+            }
+
+            return CreateNewFloatPlane(normal, dist);
+        }
+
+        private int CreateNewFloatPlane(Vector3 normal, float dist)
+        {
+            if (normal.Length() < 0.5)
+                throw new InvalidOperationException("FloatPlane: bad normal");
+
+            // create a new plane
+            var p = new BspPlane
+            {
+                Normal = normal,
+                Distance = dist,
+                Type = MathUtilities.PlaneTypeForNormal(normal)
+            };
+
+            _bspPlanes.Add(p);
+
+            var p2 = new BspPlane
+            {
+                Normal = -normal,
+                Distance = -dist,
+                Type = p.Type
+            };
+
+            _bspPlanes.Add(p2);
+
+            // allways put axial planes facing positive first
+            if (p.Type <= PlaneType.Z)
+            {
+                if (p.Normal.X < 0
+                    || p.Normal.Y < 0
+                    || p.Normal.Z < 0)
+                {
+                    // flip order
+                    _bspPlanes[^1] = p;
+                    _bspPlanes[^2] = p2;
+
+                    AddPlaneToHash(p2);
+                    AddPlaneToHash(p);
+                    return _bspPlanes.Count - 1;
+                }
+            }
+
+            AddPlaneToHash(p);
+            AddPlaneToHash(p2);
+            return _bspPlanes.Count - 2;
+        }
+
+        private void AddPlaneToHash(BspPlane p)
+        {
+            int hash = (int)MathF.Abs(p.Distance) / 8;
+            hash &= (PlaneHashes - 1);
+
+            _planehashes[hash] = new(p, _planehashes[hash]);
+        }
+
+        // TODO: merge with other version
+        void SplitBrush(BspBrush brush, int planenum, out BspBrush? front, out BspBrush? back)
+        {
+            front = back = null;
+            var plane = _bspPlanes[planenum];
+
+            // check all points
+            float d_front = 0;
+            float d_back = 0;
+
+            foreach (var side in brush.Sides)
+            {
+                var w = side.Winding;
+
+                if (w is null)
+                {
+                    continue;
+                }
+
+                foreach (var point in w.Points)
+                {
+                    var d = Vector3.Dot(point, plane.Normal) - plane.Distance;
+                    if (d > 0 && d > d_front)
+                        d_front = d;
+                    if (d < 0 && d < d_back)
+                        d_back = d;
+                }
+            }
+
+            if (d_front < 0.2) // PLANESIDE_EPSILON)
+            {   // only on back
+                back = new BspBrush(brush);
+                return;
+            }
+            if (d_back > -0.2) // PLANESIDE_EPSILON)
+            {   // only on front
+                front = new BspBrush(brush);
+                return;
+            }
+
+            // create a new winding from the split plane
+
+            var midwinding = Winding.BaseWindingForPlane(plane.Normal, plane.Distance);
+
+            foreach (var side in brush.Sides)
+            {
+                var plane2 = _bspPlanes[side.PlaneNumber ^ 1];
+
+                midwinding = midwinding.ChopWindingInPlace(plane2.Normal, plane2.Distance, 0); // PLANESIDE_EPSILON);
+
+                if (midwinding is null)
+                {
+                    break;
+                }
+            }
+
+            if (midwinding is null || midwinding.IsTiny())
+            {   // the brush isn't really split
+                var side = MathUtilities.BrushMostlyOnSide(brush, plane);
+
+                if (side == PlaneSide.Front)
+                    front = new BspBrush(brush);
+
+                if (side == PlaneSide.Back)
+                    back = new BspBrush(brush);
+                return;
+            }
+
+            if (midwinding.IsHuge())
+            {
+                _logger.Verbose("WARNING: huge winding");
+            }
+
+            // split it for real
+            var b1 = new BspBrush(brush.Sides.Count + 1);
+            var b2 = new BspBrush(brush.Sides.Count + 1);
+
+            // split all the current windings
+            foreach (var side in brush.Sides)
+            {
+                var w = side.Winding;
+
+                if (w is null)
+                {
+                    continue;
+                }
+
+                w.ClipEpsilon(plane.Normal, plane.Distance, 0 /*PLANESIDE_EPSILON*/, out var cwFront, out var cwBack);
+
+                static void CheckClipped(BspBrush b, BspSide side, Winding? cw)
+                {
+                    if (cw is null)
+                    {
+                        return;
+                    }
+
+                    var newSide = new BspSide(side)
+                    {
+                        Winding = cw
+                    };
+
+                    newSide.Flags &= ~SideFlag.Tested;
+
+                    b.Sides.Add(newSide);
+                }
+
+                CheckClipped(b1, side, cwFront);
+                CheckClipped(b2, side, cwBack);
+            }
+
+            // see if we have valid polygons on both sides
+            BspBrush? BoundBrushes(BspBrush b)
+            {
+                MathUtilities.BoundBrush(b);
+
+                bool isBogus = b.Mins.X < -MaxMapBounds || b.Maxs.X > MaxMapBounds
+                    || b.Mins.Y < -MaxMapBounds || b.Maxs.Y > MaxMapBounds
+                    || b.Mins.Z < -MaxMapBounds || b.Maxs.Z > MaxMapBounds;
+
+                if (isBogus)
+                {
+                    _logger.Verbose("bogus brush after clip");
+                }
+
+                if (b.Sides.Count < 3 || isBogus)
+                {
+                    return null;
+                }
+
+                return b;
+            }
+
+            b1 = BoundBrushes(b1);
+            b2 = BoundBrushes(b2);
+
+            if (b1 is null || b2 is null)
+            {
+                if (b1 is null && b2 is null)
+                    _logger.Verbose("split removed brush");
+                else
+                    _logger.Verbose("split not on both sides");
+
+                if (b1 is not null)
+                {
+                    front = new BspBrush(brush);
+                }
+
+                if (b2 is not null)
+                {
+                    back = new BspBrush(brush);
+                }
+
+                return;
+            }
+
+            // add the midwinding to both sides
+            static void AddMidWinding(BspBrush b, int i, int planenum, Winding midwinding)
+            {
+                var newSide = new BspSide
+                {
+                    PlaneNumber = planenum ^ i ^ 1,
+                    //store the node number in the surf to find the texinfo later on
+                    TextureInfo = TexInfoNode, //never use these sides as splitters
+                    Winding = i == 0 ? midwinding.Clone() : midwinding
+                };
+
+                newSide.Flags &= ~SideFlag.Visible;
+                newSide.Flags &= ~SideFlag.Tested;
+
+                b.Sides.Add(newSide);
+            }
+
+            AddMidWinding(b1, 0, planenum, midwinding);
+            AddMidWinding(b2, 1, planenum, midwinding);
+
+            BspBrush? CheckVolume(BspBrush? b)
+            {
+                if (BrushVolume(b) < 1)
+                {
+                    //_logger.Verbose("tiny volume after clip");
+                    return null;
+                }
+
+                return b;
+            }
+
+            front = CheckVolume(b1);
+            back = CheckVolume(b2);
+
+            if (front is null && back is null)
+            {
+                _logger.Verbose("two tiny brushes");
+            }
+        }
+
+        void SplitBrush(BspBrush brush, int planenum, int nodenum,
+                         out BspBrush? front, out BspBrush? back)
+        {
+            front = back = null;
+            var plane = _bspPlanes[planenum];
+
+            // check all points
+            float d_front = 0;
+            float d_back = 0;
+
+            foreach (var side in brush.Sides)
+            {
+                var w = side.Winding;
+
+                if (w is null)
+                {
+                    continue;
+                }
+
+                foreach (var point in w.Points)
+                {
+                    var d = Vector3.Dot(point, plane.Normal) - plane.Distance;
+                    if (d > 0 && d > d_front)
+                        d_front = d;
+                    if (d < 0 && d < d_back)
+                        d_back = d;
+                }
+            }
+
+            if (d_front < 0.1) // PLANESIDE_EPSILON)
+            {   // only on back
+                back = new BspBrush(brush);
+                _logger.Information("SplitBrush: only on back");
+                return;
+            }
+
+            if (d_back > -0.1) // PLANESIDE_EPSILON)
+            {   // only on front
+                front = new BspBrush(brush);
+                _logger.Information("SplitBrush: only on front");
+                return;
+            }
+
+            // create a new winding from the split plane
+
+            var midwinding = Winding.BaseWindingForPlane(plane.Normal, plane.Distance);
+
+            foreach (var side in brush.Sides)
+            {
+                var plane2 = _bspPlanes[side.PlaneNumber ^ 1];
+
+                midwinding = midwinding.ChopWindingInPlace(plane2.Normal, plane2.Distance, 0); // PLANESIDE_EPSILON);
+
+                if (midwinding is null)
+                {
+                    break;
+                }
+            }
+
+            if (midwinding is null || midwinding.IsTiny())
+            {   // the brush isn't really split
+                _logger.Information("SplitBrush: no split winding");
+                var side = MathUtilities.BrushMostlyOnSide(brush, plane);
+
+                if (side == PlaneSide.Front)
+                    front = new BspBrush(brush);
+
+                if (side == PlaneSide.Back)
+                    back = new BspBrush(brush);
+                return;
+            }
+
+            if (midwinding.IsHuge())
+            {
+                _logger.Information("SplitBrush: WARNING huge split winding");
+            }
+
+            // split it for real
+            var b1 = new BspBrush(brush.Sides.Count + 1);
+            var b2 = new BspBrush(brush.Sides.Count + 1);
+
+            // split all the current windings
+            foreach (var side in brush.Sides)
+            {
+                var w = side.Winding;
+
+                if (w is null)
+                {
+                    continue;
+                }
+
+                w.ClipEpsilon(plane.Normal, plane.Distance, 0 /*PLANESIDE_EPSILON*/, out var cwFront, out var cwBack);
+
+                static void CheckClipped(BspBrush b, BspSide side, Winding? cw)
+                {
+                    if (cw is null)
+                    {
+                        return;
+                    }
+
+                    var newSide = new BspSide(side)
+                    {
+                        Winding = cw
+                    };
+
+                    newSide.Flags &= ~SideFlag.Tested;
+
+                    b.Sides.Add(newSide);
+                }
+
+                CheckClipped(b1, side, cwFront);
+                CheckClipped(b2, side, cwBack);
+            }
+
+            // see if we have valid polygons on both sides
+            BspBrush? BoundBrushes(BspBrush b)
+            {
+                MathUtilities.BoundBrush(b);
+
+                bool isBogus = b.Mins.X < -MaxRange || b.Maxs.X > MaxRange
+                    || b.Mins.Y < -MaxRange || b.Maxs.Y > MaxRange
+                    || b.Mins.Z < -MaxRange || b.Maxs.Z > MaxRange;
+
+                if (isBogus)
+                {
+                    _logger.Information("SplitBrush: bogus brush after clip");
+                }
+
+                if (b.Sides.Count < 3 || isBogus)
+                {
+                    _logger.Information("SplitBrush: numsides < 3");
+                    return null;
+                }
+
+                return b;
+            }
+
+            b1 = BoundBrushes(b1);
+            b2 = BoundBrushes(b2);
+
+            if (b1 is null || b2 is null)
+            {
+                if (b1 is null && b2 is null)
+                    _logger.Information("SplitBrush: split removed brush");
+                else
+                    _logger.Information("SplitBrush: split not on both sides");
+
+                if (b1 is not null)
+                {
+                    front = new BspBrush(brush);
+                }
+
+                if (b2 is not null)
+                {
+                    back = new BspBrush(brush);
+                }
+
+                return;
+            }
+
+            // add the midwinding to both sides
+            static void AddMidWinding(BspBrush b, int i, int planenum, int nodenum, Winding midwinding)
+            {
+                var newSide = new BspSide
+                {
+                    PlaneNumber = planenum ^ i ^ 1,
+                    //store the node number in the surf to find the texinfo later on
+                    Surface = nodenum,
+                    Winding = i == 0 ? midwinding.Clone() : midwinding
+                };
+
+                newSide.Flags &= ~SideFlag.Visible;
+                newSide.Flags &= ~SideFlag.Tested;
+
+                b.Sides.Add(newSide);
+            }
+
+            AddMidWinding(b1, 0, planenum, nodenum, midwinding);
+            AddMidWinding(b2, 1, planenum, nodenum, midwinding);
+
+            BspBrush? CheckVolume(BspBrush? b)
+            {
+                if (BrushVolume(b) < 1)
+                {
+                    _logger.Information("SplitBrush: tiny volume after clip");
+                    return null;
+                }
+
+                return b;
+            }
+
+            front = CheckVolume(b1);
+            back = CheckVolume(b2);
+        }
+
+        private float BrushVolume(BspBrush? brush)
+        {
+            if (brush is null) return 0;
+
+            // grab the first valid point as the corner
+            int i;
+            Winding? w = null;
+            for (i = 0; i < brush.Sides.Count; ++i)
+            {
+                w = brush.Sides[i].Winding;
+                if (w is not null) break;
+            }
+
+            if (w is null) return 0;
+
+            var corner = w.Points[0];
+
+            // make tetrahedrons to all other faces
+            float volume = 0;
+            for (; i < brush.Sides.Count; ++i)
+            {
+                w = brush.Sides[i].Winding;
+                if (w is null) continue;
+                var plane = _bspPlanes[brush.Sides[i].PlaneNumber];
+                var d = -(Vector3.Dot(corner, plane.Normal) - plane.Distance);
+                var area = w.Area();
+                volume += d * area;
+            }
+
+            volume /= 3;
+
+            return volume;
+        }
+
+        private void CreateBrushWindings(BspBrush brush)
+        {
+            foreach (var side in brush.Sides)
+            {
+                var plane = _bspPlanes[side.PlaneNumber];
+
+                var w = Winding.BaseWindingForPlane(plane.Normal, plane.Distance);
+
+                foreach (var otherSide in brush.Sides)
+                {
+                    if (side == otherSide)
+                    {
+                        continue;
+                    }
+
+                    if ((otherSide.Flags & SideFlag.Bevel) != 0)
+                    {
+                        continue;
+                    }
+
+                    plane = _bspPlanes[otherSide.PlaneNumber ^ 1];
+
+                    w = w.ChopWindingInPlace(plane.Normal, plane.Distance, 0); //CLIP_EPSILON);
+
+                    if (w is null)
+                    {
+                        break;
+                    }
+                }
+
+                side.Winding = w;
+            }
+
+            MathUtilities.BoundBrush(brush);
+        }
+
+        private List<BspBrush> TextureBrushes(List<BspBrush> brushlist, int modelNumber)
+        {
+            if (modelNumber == 0) _logger.Information("texturing brushes");
+
+            BspBrush? prevbrush = null;
+
+            //go over the brush list
+            for (int brushIndex = 0; brushIndex < brushlist.Count;)
+            {
+                var brush = brushlist[brushIndex];
+
+                //find a texinfo for every brush side
+                foreach (var side in brush.Sides)
+                {
+                    if ((side.Flags & SideFlag.Textured) != 0) continue;
+                    //number of the node that created this brush side
+                    int sidenodenum = side.Surface;   //see midwinding in SplitBrush
+
+                    //no face found yet
+                    int bestfacenum = -1;
+                    //minimum face size
+                    float largestarea = 1;
+                    //if optimizing the texture placement and not going for the
+                    //least number of brushes
+                    if (_options.BrushOptimization == BrushOptimization.BestTextureMatch)
+                    {
+                        int i;
+                        for (i = 0; i < _bspFaces.Count; ++i)
+                        {
+                            //the face must be in the same plane as the node plane that created
+                            //this brush side
+                            if (_bspFaces[i].Plane == _bspNodes[sidenodenum].Plane)
+                            {
+                                //get the area the face and the brush side overlap
+                                var area = FaceOnWinding(_bspFaces[i], side.Winding);
+                                //if this face overlaps the brush side winding more than previous faces
+                                if (area > largestarea)
+                                {
+                                    //if there already was a face for texturing this brush side with
+                                    //a different texture
+                                    if (bestfacenum >= 0 &&
+                                            (_bspFaces[bestfacenum].TextureInfo != _bspFaces[i].TextureInfo))
+                                    {
+                                        //split the brush to fit the texture
+                                        var newbrushes = SplitBrushWithFace(brush!, _bspFaces[i]);
+                                        //if new brushes where created
+                                        if (newbrushes is not null)
+                                        {
+                                            //remove the current brush from the list
+                                            brushlist.RemoveAt(brushIndex);
+
+                                            //add the new brushes to the end of the list
+                                            brushlist.AddRange(newbrushes);
+                                            //don't forget about the prevbrush reference at the bottom of
+                                            //the outer loop
+                                            brush = prevbrush;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            _logger.Verbose("brush {Count}: no real texture split", brushIndex);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //best face for texturing this brush side
+                                        bestfacenum = i;
+                                    }
+                                }
+                            }
+                        }
+                        //if the brush was split the original brush is removed
+                        //and we just continue with the next one in the list
+                        if (i < _bspFaces.Count) break;
+                    }
+                    else
+                    {
+                        //find the face with the largest overlap with this brush side
+                        //for texturing the brush side
+                        for (int i = 0; i < _bspFaces.Count; ++i)
+                        {
+                            //the face must be in the same plane as the node plane that created
+                            //this brush side
+                            if (_bspFaces[i].Plane == _bspNodes[sidenodenum].Plane)
+                            {
+                                //get the area the face and the brush side overlap
+                                var area = FaceOnWinding(_bspFaces[i], side.Winding);
+                                //if this face overlaps the brush side winding more than previous faces
+                                if (area > largestarea)
+                                {
+                                    largestarea = area;
+                                    bestfacenum = i;
+                                }
+                            }
+                        }
+                    }
+                    //if a face was found for texturing this brush side
+                    if (bestfacenum >= 0)
+                    {
+                        //store the texinfo number
+                        side.TextureInfo = _bspFaces[bestfacenum].TextureInfo;
+
+                        //this side is textured
+                        side.Flags |= SideFlag.Textured;
+                    }
+                    else
+                    {
+                        //no texture for this side
+                        side.TextureInfo = TexInfoNode;
+                        //this side is textured
+                        side.Flags |= SideFlag.Textured;
+                    }
+                }
+
+                if (prevbrush != brush)
+                {
+                    ++brushIndex;
+                }
+
+                //previous brush in the list
+                prevbrush = brush;
+            }
+
+            if (modelNumber == 0) _logger.Information("{Count} brushes", brushlist.Count);
+
+            return brushlist;
+        }
+
+        private float FaceOnWinding(BspFace face, Winding? winding)
+        {
+            if (winding is null)
+            {
+                return 0;
+            }
+
+            var w = winding.Clone();
+            var originalPlane = _bspPlanes[face.Plane];
+            var plane = new BspPlane
+            {
+                Normal = originalPlane.Normal,
+                Distance = originalPlane.Distance,
+                Type = originalPlane.Type
+            };
+
+            //check on which side of the plane the face is
+            if (face.Side != 0)
+            {
+                plane.Normal = -plane.Normal;
+                plane.Distance = -plane.Distance;
+            }
+
+            for (int i = 0; i < face.NumEdges && w is not null; ++i)
+            {
+                //get the first and second vertex of the edge
+                var edgenum = _bspSurfedges[face.FirstEdge + i];
+                bool side = edgenum > 0;
+
+                //if the face plane is flipped
+                int absEdgeIndex = (int)MathF.Abs(edgenum);
+                var edge = _bspEdges[absEdgeIndex];
+                var v1 = _bspVertices[side ? edge.End : edge.Start];
+                var v2 = _bspVertices[side ? edge.Start : edge.End];
+
+                //create a plane through the edge vector, orthogonal to the face plane
+                //and with the normal vector pointing out of the face
+                var edgevec = v1 - v2;
+                var normal = Vector3.Cross(edgevec, plane.Normal);
+                normal = Vector3.Normalize(normal);
+                var dist = Vector3.Dot(normal, v1);
+
+                w = w.ChopWindingInPlace(normal, dist, 0.9f); //CLIP_EPSILON
+            }
+
+            if (w is not null)
+            {
+                return w.Area();
+            }
+
+            return 0;
+        }
+
+        List<BspBrush>? SplitBrushWithFace(BspBrush brush, BspFace face)
+        {
+            var originalPlane = _bspPlanes[face.Plane];
+            var plane = new BspPlane
+            {
+                Normal = originalPlane.Normal,
+                Distance = originalPlane.Distance,
+                Type = originalPlane.Type
+            };
+
+            //check on which side of the plane the face is
+            if (face.Side != 0)
+            {
+                plane.Normal = -plane.Normal;
+                plane.Distance = -plane.Distance;
+            }
+
+            List<BspBrush> brushlist = new();
+
+            BspBrush? front = null;
+
+            for (int i = 0; i < face.NumEdges; ++i)
+            {
+                //get the first and second vertex of the edge
+                var edgenum = _bspSurfedges[face.FirstEdge + i];
+                bool side = edgenum > 0;
+
+                //if the face plane is flipped
+                int absEdgeIndex = (int)MathF.Abs(edgenum);
+                var edge = _bspEdges[absEdgeIndex];
+                var v1 = _bspVertices[side ? edge.End : edge.Start];
+                var v2 = _bspVertices[side ? edge.Start : edge.End];
+
+                //create a plane through the edge vector, orthogonal to the face plane
+                //and with the normal vector pointing out of the face
+                var edgevec = v1 - v2;
+                var normal = Vector3.Cross(edgevec, plane.Normal);
+                normal = Vector3.Normalize(normal);
+                var dist = Vector3.Dot(normal, v1);
+
+                int planenum = FindFloatPlane(normal, dist);
+                //split the current brush
+                SplitBrush(brush, planenum, out front, out var back);
+                //if there is a back brush just put it in the list
+                if (back is not null)
+                {
+                    //copy the brush contents
+                    back.Side = brush.Side;
+
+                    brushlist.Insert(0, back);
+                }
+
+                if (front is null)
+                {
+                    _logger.Information("SplitBrushWithFace: no new brush");
+                    return null;
+                }
+                //copy the brush contents
+                front.Side = brush.Side;
+                //continue splitting the front brush
+                brush = front;
+            }
+
+            if (brushlist.Count == 0)
+            {
+                return null;
+            }
+
+            brushlist.Insert(0, front!);
+
+            return brushlist;
+        }
+
+        private void FixContentsTextures(List<BspBrush> brushes)
+        {
+            foreach (var brush in brushes)
+            {
+                //only fix the textures of water, slime and lava brushes
+                if (brush.Side != Contents.Water &&
+                    brush.Side != Contents.Slime &&
+                    brush.Side != Contents.Lava)
+                {
+                    continue;
+                }
+
+                //if no specific contents texture was found
+                var texinfonum = brush.Sides
+                    .Find(s => s.TextureInfo != TexInfoNode && TextureUtils.TextureContents(_textureNameMap[s.TextureInfo]) == brush.Side)?.TextureInfo ?? -1;
+
+                if (texinfonum == -1)
+                {
+                    var texInfoIndex = _textureNameMap.FirstOrDefault(t => TextureUtils.TextureContents(t.Value) == brush.Side);
+
+                    if (texInfoIndex.Value.Length > 0)
+                    {
+                        texinfonum = texInfoIndex.Key;
+                    }
+                }
+
+                if (texinfonum >= 0)
+                {
+                    //give all the brush sides this contents texture
+                    foreach (var side in brush.Sides)
+                    {
+                        side.TextureInfo = texinfonum;
+                    }
+                }
+                else
+                {
+                    _logger.Information("brush contents {Contents} with wrong textures", brush.Side);
+                }
+            }
+        }
+    }
+}
