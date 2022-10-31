@@ -381,6 +381,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
                 TextureUtils.TextureAxisFromPlane(plane, out var xAxis, out var yAxis);
 
+                var uAxis = Vector3.Normalize(s);
+                var vAxis = Vector3.Normalize(t);
+
+                var textureAxis = Vector3.Cross(uAxis, vAxis);
+
+                if (MathF.Abs(Vector3.Dot(plane.Normal, textureAxis)) < 0.01f)
+                {
+                    // Texture axis is perpendicular to plane. Use world-aligned axis.
+                    var rotation = plane.Normal.X > 0.5f ? Matrix4x4.CreateRotationY(MathF.PI / 2) : Matrix4x4.CreateRotationX(MathF.PI / 2);
+                    uAxis = Vector3.TransformNormal(plane.Normal, rotation);
+                    vAxis = Vector3.Cross(plane.Normal, uAxis);
+                }
+
                 //calculate texture shift done by entity origin
                 var originXShift = Vector3.Dot(origin, xAxis);
                 var originYShift = Vector3.Dot(origin, yAxis);
@@ -410,9 +423,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 {
                     tv = 1;
                 }
-
-                var uAxis = Vector3.Normalize(s);
-                var vAxis = Vector3.Normalize(t);
 
                 //calculate rotation of texture
                 float ang1 = Vector3Utils.GetByIndex(ref uAxis, tv) switch
