@@ -30,7 +30,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
         private readonly BspFile _bspFile;
         private readonly DecompilerOptions _options;
 
-        private readonly Planes _bspPlanes;
+        private readonly List<BspPlane> _bspPlanes;
         private readonly Faces _bspFaces;
         private readonly Nodes _bspNodes;
         private readonly Texinfo _bspTexInfo;
@@ -62,7 +62,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             _options = options;
 
             // Cache lumps to avoid lookup overhead.
-            _bspPlanes = _bspFile.Planes;
+            //_bspPlanes = _bspFile.Planes;
             _bspFaces = _bspFile.Faces;
             _bspNodes = _bspFile.Nodes;
             _bspTexInfo = _bspFile.Texinfo;
@@ -73,6 +73,85 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             _bspLeaves = _bspFile.Leaves;
             _bspEntities = _bspFile.Entities;
             _bspModels = _bspFile.Models;
+
+            // Rebuild plane list to include both sides of all planes, remap faces to map to correct plane.
+            var originalPlanes = _bspFile.Planes;
+
+            List<BspPlane> planes = new(originalPlanes.Count * 2);
+
+            Dictionary<int, int> remap = new(originalPlanes.Count * 2);
+
+            void AddPlanePair(BspPlane front, BspPlane back, int? frontIndex, int? backIndex)
+            {
+                // allways put axial planes facing positive first
+                if (front.IsFacingNegative())
+                {
+                    planes.Add(back);
+                    planes.Add(front);
+
+                    if (frontIndex is not null)
+                    {
+                        remap.Add(frontIndex.Value, planes.Count - 1);
+                    }
+
+                    if (backIndex is not null)
+                    {
+                        remap.Add(backIndex.Value, planes.Count - 2);
+                    }
+                }
+                else
+                {
+                    planes.Add(front);
+                    planes.Add(back);
+
+                    if (frontIndex is not null)
+                    {
+                        remap.Add(frontIndex.Value, planes.Count - 2);
+                    }
+
+                    if (backIndex is not null)
+                    {
+                        remap.Add(backIndex.Value, planes.Count - 1);
+                    }
+                }
+            }
+
+            for (int i = 0; i < originalPlanes.Count;)
+            {
+                var front = originalPlanes[i];
+
+                if ((i + 1) < originalPlanes.Count)
+                {
+                    var back = originalPlanes[i + 1];
+
+                    if (front.Distance == -back.Distance && front.Normal == -back.Normal)
+                    {
+                        // Planes match, this is an existing pair.
+                        AddPlanePair(front, back, i, i + 1);
+
+                        i += 2;
+                        continue;
+                    }
+                }
+
+                // Planes don't match or this is the last plane, need to regenerate a back plane.
+                AddPlanePair(front, front.ToInverted(), i, null);
+                ++i;
+            }
+
+            _bspPlanes = planes;
+
+            // Update references to planes.
+            foreach (var node in _bspNodes)
+            {
+                // Every plane should be in remap, so this needs to throw on failure.
+                node.Plane = (uint)remap[(int)node.Plane];
+            }
+
+            foreach (var face in _bspFaces)
+            {
+                face.Plane = (ushort)remap[(int)face.Plane];
+            }
 
             // Add existing planes to hash.
             foreach (var plane in _bspPlanes)
@@ -302,30 +381,20 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
             _bspPlanes.Add(p);
 
-            var p2 = new BspPlane
-            {
-                Normal = -normal,
-                Distance = -dist,
-                Type = p.Type
-            };
+            var p2 = p.ToInverted();
 
             _bspPlanes.Add(p2);
 
             // allways put axial planes facing positive first
-            if (p.Type <= PlaneType.Z)
+            if (p.IsFacingNegative())
             {
-                if (p.Normal.X < 0
-                    || p.Normal.Y < 0
-                    || p.Normal.Z < 0)
-                {
-                    // flip order
-                    _bspPlanes[^1] = p;
-                    _bspPlanes[^2] = p2;
+                // flip order
+                _bspPlanes[^1] = p;
+                _bspPlanes[^2] = p2;
 
-                    AddPlaneToHash(p2);
-                    AddPlaneToHash(p);
-                    return _bspPlanes.Count - 1;
-                }
+                AddPlaneToHash(p2);
+                AddPlaneToHash(p);
+                return _bspPlanes.Count - 1;
             }
 
             AddPlaneToHash(p);
