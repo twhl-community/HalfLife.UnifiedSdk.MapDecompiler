@@ -4,7 +4,9 @@ using Serilog;
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Map.Formats;
 using Sledge.Formats.Map.Objects;
+using Sledge.Formats.Texture.Wad;
 using System.Diagnostics;
+using WadVersion = Sledge.Formats.Texture.Wad.Version;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 {
@@ -28,8 +30,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 // If we were already cancelled.
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var mapFile = DecompileBSPFile(job, decompilerOptions, cancellationToken);
+                var (bspFile, mapFile) = DecompileBSPFile(job, decompilerOptions, cancellationToken);
                 WriteMapFile(job, mapFile);
+                MaybeWriteWadFile(job, bspFile);
                 status = MapDecompilerJobStatus.Done;
             }
             catch (OperationCanceledException)
@@ -61,7 +64,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
             }
         }
 
-        private MapFile DecompileBSPFile(MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+        private (BspFile, MapFile) DecompileBSPFile(MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             job.Logger.Information("Loading map from {BspFileName}", job.BspFileName);
 
@@ -79,7 +82,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
             LogTimeElapsed(job.Logger);
 
-            return mapFile;
+            return (bspFile, mapFile);
         }
 
         private void WriteMapFile(MapDecompilerJob job, MapFile mapFile)
@@ -91,6 +94,42 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
             MapSerialization.SerializeMap(_format, output, mapFile);
 
             LogTimeElapsed(job.Logger);
+        }
+
+        private void MaybeWriteWadFile(MapDecompilerJob job, BspFile bspFile)
+        {
+            if (bspFile.Textures.Any(t => t.NumMips > 0))
+            {
+                var wadFileName = job.GetOutputFileName(MapDecompilerJobConstants.WadExtension, "{0}_generated");
+
+                job.Logger.Information("Writing {WadFileName}", wadFileName);
+
+                // Map has at least one embedded texture, create wad file.
+                WadFile wadFile = new(WadVersion.Wad3);
+
+                foreach (var texture in bspFile.Textures.Where(t => t.NumMips > 0))
+                {
+                    job.Logger.Information("Adding texture {Name}", texture.Name);
+
+                    JobMipTextureLump lump = new()
+                    {
+                        Name = texture.Name,
+                        Width = texture.Width,
+                        Height = texture.Height,
+                        NumMips = texture.NumMips,
+                        MipData = texture.MipData,
+                        Palette = texture.Palette
+                    };
+
+                    wadFile.AddLump(texture.Name, lump);
+                }
+
+                using var stream = File.Open(wadFileName, FileMode.Create);
+
+                wadFile.Write(stream);
+
+                LogTimeElapsed(job.Logger);
+            }
         }
     }
 }

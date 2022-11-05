@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Sledge.Formats.Texture" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\HalfLife.UnifiedSdk.MapDecompiler\HalfLife.UnifiedSdk.MapDecompiler.csproj" />
   </ItemGroup>
 
