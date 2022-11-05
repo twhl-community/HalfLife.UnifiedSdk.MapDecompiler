@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     internal sealed class DecompiledBrush
     {

@@ -1,6 +1,6 @@
 ﻿using Sledge.Formats.Bsp.Objects;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     internal static class BspPlaneExtensions
     {

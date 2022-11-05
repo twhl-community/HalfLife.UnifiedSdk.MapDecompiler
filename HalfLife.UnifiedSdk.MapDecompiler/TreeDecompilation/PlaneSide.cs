@@ -1,4 +1,4 @@
-﻿namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     [Flags]
     internal enum PlaneSide

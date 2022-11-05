@@ -1,7 +1,7 @@
 using Avalonia.Threading;
 using DynamicData;
-using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
 using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
+using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -186,7 +186,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             // Decompile each map one at a time.
             // Anything that relies on user settings should be created before starting the task to prevent race conditions.
             // Make sure to cache objects in local variables to prevent member variables from being captured.
-            var decompilerOptions = DecompilerOptions.ToOptions();
+            var decompilerOptions = DecompilerOptions.ToTreeOptions();
 
             // If we're starting a single job just activate the job log automatically.
             if (_jobTask.IsCompleted && jobs.Count == 1)
@@ -199,7 +199,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             this.RaisePropertyChanged(nameof(CanCancelJobs));
         }
 
-        private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerOptions decompilerOptions)
+        private void ExecuteJobs(List<MapDecompilerJob> jobs, TreeDecompilerOptions decompilerOptions)
         {
             Dispatcher.UIThread.Post(() => _programLogger.Information("Starting {Count} new jobs", jobs.Count));
             _programStopwatch.Restart();

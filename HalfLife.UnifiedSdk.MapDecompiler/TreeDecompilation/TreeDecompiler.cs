@@ -1,5 +1,4 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
-using Serilog;
+﻿using Serilog;
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Bsp.Lumps;
 using Sledge.Formats.Bsp.Objects;
@@ -13,9 +12,9 @@ using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 using BspVersion = Sledge.Formats.Bsp.Version;
 using MapEntity = Sledge.Formats.Map.Objects.Entity;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public sealed partial class Decompiler
+    public sealed partial class TreeDecompiler
     {
         private const int PlaneHashes = 1024;
         private const int MaxRange = 4096;
@@ -28,7 +27,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
-        private readonly DecompilerOptions _options;
+        private readonly TreeDecompilerOptions _options;
 
         private readonly List<BspPlane> _bspPlanes;
         private readonly Faces _bspFaces;
@@ -55,7 +54,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
         private readonly int _originTextureIndex;
 
-        private Decompiler(ILogger logger, BspFile bspFile, DecompilerOptions options)
+        private TreeDecompiler(ILogger logger, BspFile bspFile, TreeDecompilerOptions options)
         {
             _logger = logger;
             _bspFile = bspFile;
@@ -180,7 +179,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 .ToImmutableDictionary(t => t.Index, t => _bspTextures[t.TexInfo.MipTexture].Name);
         }
 
-        public static MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
+        public static MapFile Decompile(ILogger logger, BspFile bspFile, TreeDecompilerOptions options, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(bspFile);
@@ -196,7 +195,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 throw new ArgumentException("BSP has no entities", nameof(bspFile));
             }
 
-            var decompiler = new Decompiler(logger, bspFile, options);
+            var decompiler = new TreeDecompiler(logger, bspFile, options);
 
             cancellationToken.ThrowIfCancellationRequested();
 

@@ -1,6 +1,6 @@
 ﻿using Sledge.Formats.Map.Objects;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     internal sealed class DecompiledEntity
     {

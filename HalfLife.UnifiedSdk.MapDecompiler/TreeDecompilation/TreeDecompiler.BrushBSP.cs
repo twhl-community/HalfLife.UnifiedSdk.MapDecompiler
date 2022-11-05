@@ -1,10 +1,9 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
-using Sledge.Formats.Bsp.Objects;
+﻿using Sledge.Formats.Bsp.Objects;
 using System.Numerics;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public partial class Decompiler
+    public partial class TreeDecompiler
     {
         private List<BspBrush> CreateBrushesFromBSP(int modelNumber)
         {

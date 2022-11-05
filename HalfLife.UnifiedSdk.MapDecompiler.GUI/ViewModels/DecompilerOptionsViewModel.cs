@@ -1,4 +1,4 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
+﻿using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using ReactiveUI;
 using System.Reactive.Linq;
 using System.Windows.Input;
@@ -40,7 +40,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             });
         }
 
-        public DecompilerOptions ToOptions()
+        public TreeDecompilerOptions ToTreeOptions()
         {
             return new(
                 MergeBrushes: MergeBrushes,

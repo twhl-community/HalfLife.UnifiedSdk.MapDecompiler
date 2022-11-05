@@ -2,7 +2,7 @@
 using System.Numerics;
 using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     internal static class MathUtilities
     {

@@ -1,5 +1,5 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
-using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
+﻿using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
+using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using System.CommandLine;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
@@ -43,7 +43,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
             rootCommand.SetHandler((files, destination, mergeBrushes, includeLiquids, brushOptimization) =>
             {
                 MapDecompilerFrontEnd decompiler = new();
-                DecompilerOptions decompilerOptions = new()
+                TreeDecompilerOptions decompilerOptions = new()
                 {
                     MergeBrushes = mergeBrushes,
                     IncludeLiquids = includeLiquids,

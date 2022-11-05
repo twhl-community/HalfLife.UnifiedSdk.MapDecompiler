@@ -1,5 +1,5 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
-using HalfLife.UnifiedSdk.MapDecompiler.Serialization;
+﻿using HalfLife.UnifiedSdk.MapDecompiler.Serialization;
+using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using Serilog;
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Map.Formats;
@@ -19,7 +19,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         private readonly QuakeMapFormat _format = new();
 
-        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, TreeDecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
 
@@ -73,7 +73,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         }
 
         private (BspFile, MapFile) DecompileBSPFile(
-            ILogger logger, MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+            ILogger logger, MapDecompilerJob job, TreeDecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             logger.Information("Loading map from {BspFileName}", job.BspFileName);
 
@@ -87,7 +87,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
             logger.Information("Decompiling map");
 
-            var mapFile = Decompiler.Decompile(logger, bspFile, decompilerOptions, cancellationToken);
+            var mapFile = TreeDecompiler.Decompile(logger, bspFile, decompilerOptions, cancellationToken);
 
             LogTimeElapsed(logger);
 

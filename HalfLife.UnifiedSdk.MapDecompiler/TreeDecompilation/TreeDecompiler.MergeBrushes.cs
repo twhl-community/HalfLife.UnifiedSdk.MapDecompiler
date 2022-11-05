@@ -1,8 +1,6 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
-
-namespace HalfLife.UnifiedSdk.MapDecompiler
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public partial class Decompiler
+    public partial class TreeDecompiler
     {
         private List<BspBrush> MergeBrushes(List<BspBrush> brushlist, int modelNumber)
         {

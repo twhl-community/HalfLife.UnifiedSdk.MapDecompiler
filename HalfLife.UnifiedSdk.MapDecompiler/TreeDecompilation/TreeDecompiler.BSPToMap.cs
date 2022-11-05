@@ -1,13 +1,12 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.Decompilation;
-using Sledge.Formats.Bsp.Objects;
+﻿using Sledge.Formats.Bsp.Objects;
 using Sledge.Formats.Id;
 using Sledge.Formats.Map.Objects;
 using System.Numerics;
 using MapFace = Sledge.Formats.Map.Objects.Face;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler
+namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public partial class Decompiler
+    public partial class TreeDecompiler
     {
         private void BSPBrushToMapBrush(BspBrush brush, DecompiledEntity entity, Vector3 origin)
         {
