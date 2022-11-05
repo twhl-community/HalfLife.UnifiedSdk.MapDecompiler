@@ -55,9 +55,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 var jobs = files
                     .Select(f =>
                     {
-                        var job = new MapDecompilerJob(
-                            f.FullName,
-                            Path.Combine(destinationDirectory, Path.GetFileNameWithoutExtension(f.FullName) + ".map"))
+                        var job = new MapDecompilerJob(f.FullName, destinationDirectory)
                         {
                             // TODO: figure out a way to make Output non-null all the time.
                             Output = string.Empty

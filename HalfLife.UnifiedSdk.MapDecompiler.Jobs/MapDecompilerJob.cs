@@ -10,6 +10,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         public string BspFileName { get; }
 
+        public string OutputDirectory { get; }
+
+        public string BaseFileName { get; }
+
         public string MapFileName { get; }
 
         public string From => Path.GetFileName(BspFileName);
@@ -36,7 +40,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         public event Action<MapDecompilerJob, string>? MessageReceived;
 
-        public MapDecompilerJob(string bspFileName, string mapFileName)
+        public MapDecompilerJob(string bspFileName, string outputDirectory)
         {
             var sink = new ForwardingSink(LogMessage, "{Message:lj}{NewLine}{Exception}");
 
@@ -46,7 +50,32 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 .CreateLogger();
 
             BspFileName = bspFileName;
-            MapFileName = mapFileName;
+            OutputDirectory = outputDirectory;
+            BaseFileName = Path.GetFileNameWithoutExtension(bspFileName);
+
+            MapFileName = GetOutputFileName(MapDecompilerJobConstants.MapExtension);
+        }
+
+        /// <summary>
+        /// Gets a filename formatted for this map for writing to.
+        /// </summary>
+        /// <param name="extension">File extension, including period.</param>
+        /// <param name="format">
+        /// Format string to use to format the filename itself, excluding extension.
+        /// Argument 0 is the filename.
+        /// </param>
+        public string GetOutputFileName(string extension, string format)
+        {
+            return Path.Combine(OutputDirectory, string.Format(format, BaseFileName) + extension);
+        }
+
+        /// <summary>
+        /// Gets a filename formatted for this map for writing to.
+        /// </summary>
+        /// <see cref="GetOutputFileName(string, string)"/>
+        public string GetOutputFileName(string extension)
+        {
+            return GetOutputFileName(extension, "{0}");
         }
 
         private TRet RaiseAndSetIfChanged<TRet>(ref TRet backingField, TRet value, [CallerMemberName] string? propertyName = null)

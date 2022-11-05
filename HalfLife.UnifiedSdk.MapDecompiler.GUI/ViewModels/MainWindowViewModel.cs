@@ -120,19 +120,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     {
                         var directory = Path.GetDirectoryName(bspFileName);
 
-                        var mapFileName = directory switch
-                        {
-                            null => string.Empty,
-                            _ => Path.Combine(directory, Path.GetFileNameWithoutExtension(bspFileName) + ".map")
-                        };
-
-                        if (mapFileName.Length == 0)
+                        if (directory is null)
                         {
                             // TODO: maybe show a message box.
                             _programLogger.Error("Could not get BSP file directory");
                         }
 
-                        var job = new MapDecompilerJob(bspFileName, mapFileName);
+                        var job = new MapDecompilerJob(bspFileName, directory);
 
                         job.MessageReceived += LogMessage;
 
