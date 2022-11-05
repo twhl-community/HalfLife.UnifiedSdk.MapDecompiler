@@ -19,7 +19,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private readonly CancellationTokenSource _jobCancellationTokenSource = new();
+        private CancellationTokenSource _jobCancellationTokenSource = new();
 
         private Task _jobTask = Task.CompletedTask;
 
@@ -36,6 +36,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         public ICommand CancelCommand { get; }
 
         public Interaction<CancelJobsDialogViewModel, bool> ShowCancelJobsDialog { get; } = new();
+
+        public bool CanCancelJobs => !_jobTask.IsCompleted;
 
         public ObservableCollection<MapDecompilerJob> Files { get; } = new();
 
@@ -139,7 +141,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 QueueJobs(jobs);
             });
 
-            CancelCommand = ReactiveCommand.Create(() => CancelJobs());
+            CancelCommand = ReactiveCommand.Create(() => CancelJobs(), this.WhenAnyValue(x => x.CanCancelJobs));
 
             DeleteCommand = ReactiveCommand.Create(
                 () => Files.Remove(CurrentJob!),
@@ -165,6 +167,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         {
             _jobCancellationTokenSource.Cancel();
             await _jobTask;
+            _jobTask = Task.CompletedTask;
+            _jobCancellationTokenSource = new();
         }
 
         private static void LogMessage(MapDecompilerJob job, string message)
@@ -190,7 +194,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 CurrentJob = jobs[0];
             }
 
-            _jobTask = _jobTask.ContinueWith(_ => ExecuteJobs(jobs, decompilerOptions), _jobCancellationTokenSource.Token);
+            _jobTask = _jobTask.ContinueWith(_ => ExecuteJobs(jobs, decompilerOptions), TaskScheduler.Default);
+
+            this.RaisePropertyChanged(nameof(CanCancelJobs));
         }
 
         private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerOptions decompilerOptions)
@@ -245,7 +251,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             {
                 var timeElapsed = _programStopwatch.Elapsed;
 
-                Dispatcher.UIThread.Post(() => _programLogger.Information("Total time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", timeElapsed));
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _programLogger.Information("Total time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", timeElapsed);
+                    this.RaisePropertyChanged(nameof(CanCancelJobs));
+                });
                 _programStopwatch.Stop();
             }
         }
