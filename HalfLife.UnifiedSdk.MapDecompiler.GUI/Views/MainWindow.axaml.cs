@@ -18,6 +18,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
             {
                 d(ViewModel!.ShowConvertFilesDialog.RegisterHandler(DoShowOpenFileDialogAsync));
                 d(ViewModel!.ShowCancelJobsDialog.RegisterHandler(DoShowCancelJobsDialogAsync));
+                d(ViewModel!.DecompilerOptions.ShowBrowseDirectoryDialog.RegisterHandler(DoShowOpenDirectoryDialogAsync));
             });
         }
 
@@ -52,6 +53,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
                     Extensions = f.Extensions
                 }).ToList(),
                 AllowMultiple = interaction.Input.AllowMultiple
+            };
+
+            var result = await dialog.ShowAsync(this);
+            interaction.SetOutput(result);
+        }
+
+        private async Task DoShowOpenDirectoryDialogAsync(InteractionContext<OpenDirectoryViewModel, string?> interaction)
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = interaction.Input.Title
             };
 
             var result = await dialog.ShowAsync(this);

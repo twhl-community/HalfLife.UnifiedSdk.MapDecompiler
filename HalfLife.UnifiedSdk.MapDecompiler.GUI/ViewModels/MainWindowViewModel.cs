@@ -115,18 +115,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     return;
                 }
 
+                var outputDirectory = DecompilerOptions.OutputDirectory;
+
+                if (outputDirectory.Length == 0)
+                {
+                    outputDirectory = Directory.GetCurrentDirectory();
+                }
+
                 var jobs = result
                     .Select(bspFileName =>
                     {
-                        var directory = Path.GetDirectoryName(bspFileName);
-
-                        if (directory is null)
-                        {
-                            // TODO: maybe show a message box.
-                            _programLogger.Error("Could not get BSP file directory");
-                        }
-
-                        var job = new MapDecompilerJob(bspFileName, directory);
+                        var job = new MapDecompilerJob(bspFileName, outputDirectory);
 
                         job.MessageReceived += LogMessage;
 
