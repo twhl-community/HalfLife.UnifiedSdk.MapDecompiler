@@ -23,7 +23,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         {
             const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
 
-            using var logger =  new LoggerConfiguration()
+            using var logger = new LoggerConfiguration()
                 .WriteTo.Sink(new ForwardingSink(job.LogMessage, outputTemplate))
                 .WriteTo.File(job.GetOutputFileName(MapDecompilerJobConstants.LogExtension), outputTemplate: outputTemplate)
                 .MinimumLevel.Information()
