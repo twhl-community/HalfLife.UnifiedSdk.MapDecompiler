@@ -234,6 +234,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     }
                 }
             }
+            finally
+            {
+                foreach (var job in jobs)
+                {
+                    job.MessageReceived -= LogMessage;
+                }
+            }
 
             {
                 var timeElapsed = _programStopwatch.Elapsed;
