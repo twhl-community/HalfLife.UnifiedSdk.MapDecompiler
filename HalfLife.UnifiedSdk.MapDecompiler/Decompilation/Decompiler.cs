@@ -154,9 +154,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             }
 
             // Add existing planes to hash.
-            foreach (var plane in _bspPlanes)
+            foreach (var planeNumber in Enumerable.Range(0, _bspPlanes.Count))
             {
-                AddPlaneToHash(plane);
+                AddPlaneToHash(planeNumber);
             }
 
             // Add ORIGIN texture to textures.
@@ -352,13 +352,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 int h = (hash + i) & (PlaneHashes - 1);
                 for (var p = _planehashes[h]; p is not null; p = p.Chain)
                 {
-                    if (MathUtilities.PlaneEqual(p.Plane, normal, dist))
+                    if (MathUtilities.PlaneEqual(_bspPlanes[p.PlaneNumber], normal, dist))
                     {
-                        var index = _bspPlanes.IndexOf(p.Plane);
-
-                        Debug.Assert(index != -1);
-
-                        return index;
+                        return p.PlaneNumber;
                     }
                 }
             }
@@ -392,22 +388,24 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 _bspPlanes[^1] = p;
                 _bspPlanes[^2] = p2;
 
-                AddPlaneToHash(p2);
-                AddPlaneToHash(p);
+                AddPlaneToHash(_bspPlanes.Count - 2);
+                AddPlaneToHash(_bspPlanes.Count - 1);
                 return _bspPlanes.Count - 1;
             }
 
-            AddPlaneToHash(p);
-            AddPlaneToHash(p2);
+            AddPlaneToHash(_bspPlanes.Count - 2);
+            AddPlaneToHash(_bspPlanes.Count - 1);
             return _bspPlanes.Count - 2;
         }
 
-        private void AddPlaneToHash(BspPlane p)
+        private void AddPlaneToHash(int planeNumber)
         {
+            var p = _bspPlanes[planeNumber];
+
             int hash = (int)MathF.Abs(p.Distance) / 8;
             hash &= (PlaneHashes - 1);
 
-            _planehashes[hash] = new(p, _planehashes[hash]);
+            _planehashes[hash] = new(planeNumber, _planehashes[hash]);
         }
 
         /// <summary>

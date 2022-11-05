@@ -2,5 +2,5 @@
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
 {
-    internal sealed record HashedPlane(Plane Plane, HashedPlane? Chain);
+    internal sealed record HashedPlane(int PlaneNumber, HashedPlane? Chain);
 }
