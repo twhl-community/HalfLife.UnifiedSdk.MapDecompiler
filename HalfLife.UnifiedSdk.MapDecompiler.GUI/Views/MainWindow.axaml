@@ -27,19 +27,23 @@
 			<dec:DecompilerOptionsView Grid.Column="0" Grid.Row="0"
 									   DataContext="{Binding DecompilerOptions}"/>
 
-			<StackPanel Grid.Column="0" Grid.Row="1">
+			<StackPanel Grid.Column="0" Grid.Row="1" VerticalAlignment="Bottom">
 				<Button Content="Cancel" Command="{Binding CancelCommand}"/>
 			</StackPanel>
 			
-			<TextBlock Grid.Column="1" Grid.Row="0">
+			<TextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
 Welcome to the Half-Life Unified SDK Map Decompiler
 
 To convert files go to the File menu and choose Convert.
 Multiple bsp files can be selected in the Convert dialog.
-The conversions will be listed in the list view at the left.
+The conversions will be listed in the list view on the left.
 Any number of conversions can be listed and will be processed in parallel.
 While converting conversions can be added to and deleted from the list.
 Select a conversion to see its log.
+
+Configure the decompiler options on the left.
+Options are applied when files are added.
+They cannot be changed afterwards without adding the file again.
 			</TextBlock>
 
 			<Grid Grid.Column="0" Grid.ColumnSpan="2"
