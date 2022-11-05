@@ -137,6 +137,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
             return planeSide;
         }
 
+        /// <summary>
+        /// Sets the mins/maxs based on the windings
+        /// </summary>
+        /// <param name="brush"></param>
         public static void BoundBrush(BspBrush brush)
         {
             ClearBounds(ref brush.Mins, ref brush.Maxs);

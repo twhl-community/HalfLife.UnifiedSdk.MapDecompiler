@@ -38,6 +38,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return CreateBrushes_r(brush, model.HeadNodes[0]);
         }
 
+        /// <summary>
+        /// Creates a new axial brush
+        /// </summary>
+        /// <param name="mins"></param>
+        /// <param name="maxs"></param>
         private BspBrush BrushFromBounds(Vector3 mins, Vector3 maxs)
         {
             BspBrush brush = new();

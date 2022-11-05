@@ -53,6 +53,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
             return total;
         }
 
+        /// <summary>
+        /// Returns true if the winding would be crunched out of existence by the vertex snapping.
+        /// </summary>
         public bool IsTiny()
         {
             int edges = 0;
@@ -72,6 +75,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Decompilation
             return true;
         }
 
+        /// <summary>
+        /// Returns true if the winding still has one of the points from basewinding for plane
+        /// </summary>
         public bool IsHuge()
         {
             foreach (var point in Points)

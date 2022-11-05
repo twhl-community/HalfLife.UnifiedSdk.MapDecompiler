@@ -77,6 +77,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             entity.Entity.Children.Add(mapbrush);
         }
 
+        /// <summary>
+        /// creates windings for sides and mins / maxs for the brush
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="ob"></param>
         private bool MakeBrushWindings(DecompiledEntity entity, DecompiledBrush ob)
         {
             MathUtilities.ClearBounds(ref ob.Mins, ref ob.Maxs);
@@ -148,6 +153,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return true;
         }
 
+        /// <summary>
+        /// Adds any additional planes necessary to allow the brush to be expanded against axial bounding boxes
+        /// </summary>
+        /// <param name="b"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         private void AddBrushBevels(DecompiledBrush b)
         {
             //

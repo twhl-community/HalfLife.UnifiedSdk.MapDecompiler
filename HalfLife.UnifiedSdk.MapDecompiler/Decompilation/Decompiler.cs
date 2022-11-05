@@ -410,7 +410,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             _planehashes[hash] = new(p, _planehashes[hash]);
         }
 
-        // TODO: merge with other version
+        /// <summary>
+        /// Generates two new brushes, leaving the original unchanged
+        /// TODO: merge with other version
+        /// </summary>
+        /// <param name="brush"></param>
+        /// <param name="planenum"></param>
+        /// <param name="front"></param>
+        /// <param name="back"></param>
         void SplitBrush(BspBrush brush, int planenum, out BspBrush? front, out BspBrush? back)
         {
             front = back = null;
@@ -605,6 +612,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             }
         }
 
+        /// <summary>
+        /// Generates two new brushes, leaving the original unchanged
+        /// modified for Half-Life because there are quite a lot of tiny node leaves in the Half-Life bsps
+        /// </summary>
+        /// <param name="brush"></param>
+        /// <param name="planenum"></param>
+        /// <param name="nodenum"></param>
+        /// <param name="front"></param>
+        /// <param name="back"></param>
         void SplitBrush(BspBrush brush, int planenum, int nodenum,
                          out BspBrush? front, out BspBrush? back)
         {
@@ -998,6 +1014,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return brushlist;
         }
 
+        /// <summary>
+        /// returns the amount the face and the winding have overlap
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="winding"></param>
         private float FaceOnWinding(BspFace face, Winding? winding)
         {
             if (winding is null)
@@ -1051,6 +1072,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return 0;
         }
 
+        /// <summary>
+        /// returns a list with brushes created by splitting the given brush with planes
+        /// that go through the face edges and are orthogonal to the face plane
+        /// </summary>
+        /// <param name="brush"></param>
+        /// <param name="face"></param>
+        /// <returns></returns>
         List<BspBrush>? SplitBrushWithFace(BspBrush brush, BspFace face)
         {
             var originalPlane = _bspPlanes[face.Plane];
