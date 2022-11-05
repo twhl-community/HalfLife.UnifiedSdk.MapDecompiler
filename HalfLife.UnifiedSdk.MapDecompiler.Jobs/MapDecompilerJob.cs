@@ -42,18 +42,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         public MapDecompilerJob(string bspFileName, string outputDirectory)
         {
-            var sink = new ForwardingSink(LogMessage, "{Message:lj}{NewLine}{Exception}");
-
-            Logger = new LoggerConfiguration()
-                .WriteTo.Sink(sink)
-                .MinimumLevel.Information()
-                .CreateLogger();
-
             BspFileName = bspFileName;
             OutputDirectory = outputDirectory;
             BaseFileName = Path.GetFileNameWithoutExtension(bspFileName);
 
             MapFileName = GetOutputFileName(MapDecompilerJobConstants.MapExtension);
+
+            const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
+
+            Logger = new LoggerConfiguration()
+                .WriteTo.Sink(new ForwardingSink(LogMessage, outputTemplate))
+                .WriteTo.File(GetOutputFileName(".log"), outputTemplate: outputTemplate)
+                .MinimumLevel.Information()
+                .CreateLogger();
         }
 
         /// <summary>
