@@ -1,13 +1,10 @@
-﻿using Serilog;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 {
     public sealed class MapDecompilerJob : INotifyPropertyChanged
     {
-        public ILogger Logger { get; }
-
         public string BspFileName { get; }
 
         public string OutputDirectory { get; }
@@ -47,14 +44,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
             BaseFileName = Path.GetFileNameWithoutExtension(bspFileName);
 
             MapFileName = GetOutputFileName(MapDecompilerJobConstants.MapExtension);
-
-            const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
-
-            Logger = new LoggerConfiguration()
-                .WriteTo.Sink(new ForwardingSink(LogMessage, outputTemplate))
-                .WriteTo.File(GetOutputFileName(".log"), outputTemplate: outputTemplate)
-                .MinimumLevel.Information()
-                .CreateLogger();
         }
 
         /// <summary>
@@ -92,7 +81,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
             return backingField;
         }
 
-        private void LogMessage(string message)
+        public void LogMessage(string message)
         {
             MessageReceived?.Invoke(this, message);
         }

@@ -21,6 +21,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         public MapDecompilerJobStatus Decompile(MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
+            const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
+
+            using var logger =  new LoggerConfiguration()
+                .WriteTo.Sink(new ForwardingSink(job.LogMessage, outputTemplate))
+                .WriteTo.File(job.GetOutputFileName(MapDecompilerJobConstants.LogExtension), outputTemplate: outputTemplate)
+                .MinimumLevel.Information()
+                .CreateLogger();
+
             _stopWatch.Restart();
 
             var status = MapDecompilerJobStatus.Failed;
@@ -30,24 +38,24 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 // If we were already cancelled.
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var (bspFile, mapFile) = DecompileBSPFile(job, decompilerOptions, cancellationToken);
-                WriteMapFile(job, mapFile);
-                MaybeWriteWadFile(job, bspFile);
+                var (bspFile, mapFile) = DecompileBSPFile(logger, job, decompilerOptions, cancellationToken);
+                WriteMapFile(logger, job, mapFile);
+                MaybeWriteWadFile(logger, job, bspFile);
                 status = MapDecompilerJobStatus.Done;
             }
             catch (OperationCanceledException)
             {
-                job.Logger.Information("Decompilation cancelled");
+                logger.Information("Decompilation cancelled");
                 status = MapDecompilerJobStatus.Canceled;
             }
             catch (Exception e)
             {
-                job.Logger.Error(e, "An error occurred while decompiling a map");
+                logger.Error(e, "An error occurred while decompiling a map");
             }
 
             _stopWatch.Stop();
 
-            LogTimeElapsed(job.Logger, true);
+            LogTimeElapsed(logger, true);
 
             return status;
         }
@@ -64,52 +72,53 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
             }
         }
 
-        private (BspFile, MapFile) DecompileBSPFile(MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+        private (BspFile, MapFile) DecompileBSPFile(
+            ILogger logger, MapDecompilerJob job, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
-            job.Logger.Information("Loading map from {BspFileName}", job.BspFileName);
+            logger.Information("Loading map from {BspFileName}", job.BspFileName);
 
             using var stream = File.OpenRead(job.BspFileName);
 
-            job.Logger.Information("Deserializing BSP data");
+            logger.Information("Deserializing BSP data");
 
             var bspFile = new BspFile(stream);
 
-            LogTimeElapsed(job.Logger);
+            LogTimeElapsed(logger);
 
-            job.Logger.Information("Decompiling map");
+            logger.Information("Decompiling map");
 
-            var mapFile = Decompiler.Decompile(job.Logger, bspFile, decompilerOptions, cancellationToken);
+            var mapFile = Decompiler.Decompile(logger, bspFile, decompilerOptions, cancellationToken);
 
-            LogTimeElapsed(job.Logger);
+            LogTimeElapsed(logger);
 
             return (bspFile, mapFile);
         }
 
-        private void WriteMapFile(MapDecompilerJob job, MapFile mapFile)
+        private void WriteMapFile(ILogger logger, MapDecompilerJob job, MapFile mapFile)
         {
-            job.Logger.Information("Writing {MapFileName}", job.MapFileName);
+            logger.Information("Writing {MapFileName}", job.MapFileName);
 
             using var output = File.Open(job.MapFileName, FileMode.Create);
 
             MapSerialization.SerializeMap(_format, output, mapFile);
 
-            LogTimeElapsed(job.Logger);
+            LogTimeElapsed(logger);
         }
 
-        private void MaybeWriteWadFile(MapDecompilerJob job, BspFile bspFile)
+        private void MaybeWriteWadFile(ILogger logger, MapDecompilerJob job, BspFile bspFile)
         {
             if (bspFile.Textures.Any(t => t.NumMips > 0))
             {
                 var wadFileName = job.GetOutputFileName(MapDecompilerJobConstants.WadExtension, "{0}_generated");
 
-                job.Logger.Information("Writing {WadFileName}", wadFileName);
+                logger.Information("Writing {WadFileName}", wadFileName);
 
                 // Map has at least one embedded texture, create wad file.
                 WadFile wadFile = new(WadVersion.Wad3);
 
                 foreach (var texture in bspFile.Textures.Where(t => t.NumMips > 0))
                 {
-                    job.Logger.Information("Adding texture {Name}", texture.Name);
+                    logger.Information("Adding texture {Name}", texture.Name);
 
                     JobMipTextureLump lump = new()
                     {
@@ -128,7 +137,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
                 wadFile.Write(stream);
 
-                LogTimeElapsed(job.Logger);
+                LogTimeElapsed(logger);
             }
         }
     }
