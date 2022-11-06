@@ -19,8 +19,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             maxs += new Vector3(8);
 
             //NOTE: have to add the BSP tree mins and maxs to the MAP mins and maxs
-            MathUtilities.AddPointToBounds(mins, ref _mapMins, ref _mapMaxs);
-            MathUtilities.AddPointToBounds(maxs, ref _mapMins, ref _mapMaxs);
+            MathUtils.AddPointToBounds(mins, ref _mapMins, ref _mapMaxs);
+            MathUtils.AddPointToBounds(maxs, ref _mapMins, ref _mapMaxs);
 
             if (modelNumber == 0)
             {

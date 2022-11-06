@@ -341,7 +341,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private int FindFloatPlane(Vector3 normal, float dist)
         {
-            MathUtilities.SnapPlane(normal, ref dist);
+            MathUtils.SnapPlane(normal, ref dist);
             int hash = (int)MathF.Abs(dist) / 8;
             hash &= (PlaneHashes - 1);
 
@@ -351,7 +351,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 int h = (hash + i) & (PlaneHashes - 1);
                 for (var p = _planehashes[h]; p is not null; p = p.Chain)
                 {
-                    if (MathUtilities.PlaneEqual(_bspPlanes[p.PlaneNumber], normal, dist))
+                    if (MathUtils.PlaneEqual(_bspPlanes[p.PlaneNumber], normal, dist))
                     {
                         return p.PlaneNumber;
                     }
@@ -371,7 +371,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 Normal = normal,
                 Distance = dist,
-                Type = MathUtilities.PlaneTypeForNormal(normal)
+                Type = MathUtils.PlaneTypeForNormal(normal)
             };
 
             _bspPlanes.Add(p);
@@ -472,7 +472,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             if (midwinding is null || midwinding.IsTiny())
             {   // the brush isn't really split
-                var side = MathUtilities.BrushMostlyOnSide(brush, plane);
+                var side = MathUtils.BrushMostlyOnSide(brush, plane);
 
                 if (side == PlaneSide.Front)
                     front = new BspBrush(brush);
@@ -527,7 +527,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             // see if we have valid polygons on both sides
             BspBrush? BoundBrushes(BspBrush b)
             {
-                MathUtilities.BoundBrush(b);
+                MathUtils.BoundBrush(b);
 
                 bool isBogus = b.Mins.X < -MaxMapBounds || b.Maxs.X > MaxMapBounds
                     || b.Mins.Y < -MaxMapBounds || b.Maxs.Y > MaxMapBounds
@@ -680,7 +680,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             if (midwinding is null || midwinding.IsTiny())
             {   // the brush isn't really split
                 _logger.Information("SplitBrush: no split winding");
-                var side = MathUtilities.BrushMostlyOnSide(brush, plane);
+                var side = MathUtils.BrushMostlyOnSide(brush, plane);
 
                 if (side == PlaneSide.Front)
                     front = new BspBrush(brush);
@@ -735,7 +735,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             // see if we have valid polygons on both sides
             BspBrush? BoundBrushes(BspBrush b)
             {
-                MathUtilities.BoundBrush(b);
+                MathUtils.BoundBrush(b);
 
                 bool isBogus = b.Mins.X < -MaxRange || b.Maxs.X > MaxRange
                     || b.Mins.Y < -MaxRange || b.Maxs.Y > MaxRange
@@ -880,7 +880,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 side.Winding = w;
             }
 
-            MathUtilities.BoundBrush(brush);
+            MathUtils.BoundBrush(brush);
         }
 
         private List<BspBrush> TextureBrushes(List<BspBrush> brushlist, int modelNumber)

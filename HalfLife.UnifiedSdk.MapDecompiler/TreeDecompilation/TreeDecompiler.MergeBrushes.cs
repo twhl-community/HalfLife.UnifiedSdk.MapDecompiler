@@ -184,7 +184,7 @@
             }
 
             BSPBrushWindings(newbrush);
-            MathUtilities.BoundBrush(newbrush);
+            MathUtils.BoundBrush(newbrush);
             CheckBSPBrush(newbrush);
 
             newbrush.Side = brush1.Side;
@@ -245,7 +245,7 @@
                 }
             }
 
-            MathUtilities.BoundBrush(brush);
+            MathUtils.BoundBrush(brush);
 
             //check for out of bound brushes
             bool CheckBounds(int i, float min, float max)

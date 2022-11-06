@@ -4,7 +4,7 @@ using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    internal static class MathUtilities
+    internal static class MathUtils
     {
         public const float NormalEpsilon = 0.0001f;
         public const float DistEpsilon = 0.02f;

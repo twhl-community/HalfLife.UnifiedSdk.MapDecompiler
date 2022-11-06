@@ -83,7 +83,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         /// <param name="ob"></param>
         private bool MakeBrushWindings(DecompiledEntity entity, DecompiledBrush ob)
         {
-            MathUtilities.ClearBounds(ref ob.Mins, ref ob.Maxs);
+            MathUtils.ClearBounds(ref ob.Mins, ref ob.Maxs);
 
             foreach (var side1 in ob.Brush.Sides)
             {
@@ -118,7 +118,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     side1.Flags |= SideFlag.Visible;
                     foreach (var point in w.Points)
                     {
-                        MathUtilities.AddPointToBounds(point, ref ob.Mins, ref ob.Maxs);
+                        MathUtils.AddPointToBounds(point, ref ob.Mins, ref ob.Maxs);
                     }
                 }
             }
@@ -237,7 +237,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                     vec = Vector3.Normalize(vec);
 
-                    MathUtilities.SnapVector(ref vec);
+                    MathUtils.SnapVector(ref vec);
 
                     {
                         int vi;
@@ -277,7 +277,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                             if (b.Brush.Sides.Find(s =>
                             {
                                 // if this plane has allready been used, skip it
-                                if (MathUtilities.PlaneEqual(_bspPlanes[s.PlaneNumber], normal, dist))
+                                if (MathUtils.PlaneEqual(_bspPlanes[s.PlaneNumber], normal, dist))
                                 {
                                     return true;
                                 }
