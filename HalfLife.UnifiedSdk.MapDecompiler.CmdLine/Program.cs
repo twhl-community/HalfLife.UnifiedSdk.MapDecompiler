@@ -36,10 +36,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
 
             var filesArgument = new Argument<IEnumerable<FileInfo>>("files", description: "List of files to decompile");
 
-            var destinationOption = new Option<DirectoryInfo>(
+            var destinationOption = new Option<DirectoryInfo?>(
                 "--destination",
-                getDefaultValue: () => new DirectoryInfo(Directory.GetCurrentDirectory()),
-                description: "Directory to save decompiled maps");
+                getDefaultValue: () => null,
+                description: "Directory to save decompiled maps to. Leave empty to use current working directory");
 
             var mergeBrushesOption = new Option<bool>("--merge-brushes",
                 getDefaultValue: () => true,
@@ -82,6 +82,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 }
 
                 var uniqueFiles = groupedFiles.Select(g => g.Key);
+
+                destination ??= new DirectoryInfo(Directory.GetCurrentDirectory());
 
                 MapDecompilerFrontEnd decompiler = new();
                 DecompilerOptions decompilerOptions = new()
