@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "HalfLife.UnifiedSdk.MapDecompiler.CmdLine": {
-      "commandName": "Project",
-      "commandLineArgs": "--files \"F:\\Users\\Sam\\Documents\\Half-Life\\winbspc_1.4\\ba_tram2.bsp\" \"F:\\Users\\Sam\\Documents\\Half-Life\\winbspc_1.4\\c0a0.bsp\"\r\n--destination \"F:\\Users\\Sam\\Documents\\Half-Life\\winbspc_1.4\""
-    }
-  }
-}
