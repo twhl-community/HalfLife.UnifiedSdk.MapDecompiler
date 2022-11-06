@@ -73,6 +73,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             {
                 this.RaiseAndSetIfChanged(ref _currentJob, value);
                 this.RaisePropertyChanged(nameof(CanExecuteDelete));
+                this.RaisePropertyChanged(nameof(CanDecompileAgain));
 
                 if (_currentJob is not null)
                 {
@@ -88,6 +89,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         public ICommand DeleteCommand { get; }
 
         public bool CanExecuteDelete => CurrentJob is not null && CurrentJob.Status != MapDecompilerJobStatus.Converting;
+
+        public ICommand DecompileAgainCommand { get; }
+
+        public bool CanDecompileAgain => CurrentJob is not null
+            && CurrentJob.Status != MapDecompilerJobStatus.Waiting && CurrentJob.Status != MapDecompilerJobStatus.Converting;
 
         public MainWindowViewModel()
         {
@@ -145,6 +151,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             DeleteCommand = ReactiveCommand.Create(
                 () => Files.Remove(CurrentJob!),
                 this.WhenAnyValue(x => x.CanExecuteDelete));
+
+            DecompileAgainCommand = ReactiveCommand.Create(
+                () => QueueJobAgain(CurrentJob!),
+                this.WhenAnyValue(x => x.CanDecompileAgain));
         }
 
         public async Task<bool> ShouldClose()
@@ -199,6 +209,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             this.RaisePropertyChanged(nameof(CanCancelJobs));
         }
 
+        private void QueueJobAgain(MapDecompilerJob job)
+        {
+            job.Output = null;
+            job.MessageReceived += LogMessage;
+
+            QueueJobs(new() { job });
+        }
+
         private void ExecuteJobs(List<MapDecompilerJob> jobs, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions)
         {
             Dispatcher.UIThread.Post(() => _programLogger.Information("Starting {Count} new jobs", jobs.Count));
@@ -226,6 +244,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     {
                         job.Status = result;
 
+                        if (job == CurrentJob)
+                        {
+                            this.RaisePropertyChanged(nameof(CanDecompileAgain));
+                        }
+
                         _programLogger.Information("{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", job.From, job.To, timeElapsed);
                     });
                 });
@@ -239,6 +262,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                         job.Status = MapDecompilerJobStatus.Canceled;
                     }
                 }
+
+                this.RaisePropertyChanged(nameof(CanDecompileAgain));
             }
             finally
             {

@@ -43,7 +43,7 @@ Select a conversion to see its log.
 
 Configure the decompiler options on the left.
 Options are applied when files are added.
-They cannot be changed afterwards without adding the file again.
+They cannot be changed afterwards without converting the file again.
 			</TextBlock>
 
 			<Grid Grid.Column="0" Grid.ColumnSpan="2"
@@ -67,6 +67,7 @@ They cannot be changed afterwards without adding the file again.
 					<DataGrid.ContextMenu>
 						<ContextMenu>
 							<MenuItem Header="Delete" Command="{Binding DeleteCommand}"/>
+							<MenuItem Header="Decompile Again" Command="{Binding DecompileAgainCommand}"/>
 						</ContextMenu>
 					</DataGrid.ContextMenu>
 				</DataGrid>
