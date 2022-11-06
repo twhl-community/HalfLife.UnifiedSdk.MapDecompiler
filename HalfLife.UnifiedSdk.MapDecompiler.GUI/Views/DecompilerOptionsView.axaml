@@ -11,7 +11,7 @@
     </UserControl.Resources>
 
     <Grid ColumnDefinitions="Auto, Auto, *"
-          RowDefinitions="Auto, Auto, Auto, Auto">
+          RowDefinitions="Auto, Auto, Auto">
         <Grid Grid.Column="0" Grid.ColumnSpan="3"
               Grid.Row="0"
               ColumnDefinitions="Auto, *, Auto"
@@ -24,27 +24,55 @@
                     Content="Browse"
                     Command="{Binding BrowseOutputDirectoryCommand}"/>
         </Grid>
-
-        <Label Grid.Column="0" Grid.Row="1" Content="General:"/>
         
-        <CheckBox Grid.Column="0" Grid.Row="2"
-                  Content="Merge Brushes"
-                  IsChecked="{Binding MergeBrushes}"/>
+        <Label Grid.Column="0" Grid.Row="1"
+               Content="Select Decompiler:"/>
 
-        <CheckBox Grid.Column="0" Grid.Row="3"
-                  Content="Include Liquids"
-                  IsChecked="{Binding IncludeLiquids}"/>
+        <TabControl Grid.Column="0" Grid.Row="2"
+                    Grid.IsSharedSizeScope="True"
+                    SelectedIndex="{Binding SelectedStrategy}">
+            <TabItem Header="Tree-Based Decompiler">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition SharedSizeGroup="DecompilerTabItemHeight"/>
+                    </Grid.RowDefinitions>
 
-        <Label Grid.Column="1" Grid.Row="1" Content="Brush Optimization:"/>
+                    <Grid ColumnDefinitions="Auto, Auto"
+                      RowDefinitions="Auto, Auto, Auto">
+                        <Label Grid.Column="0" Grid.Row="0" Content="General:"/>
 
-        <RadioButton Grid.Column="1" Grid.Row="2"
-                     GroupName="BrushOptimization"
-                     Content="Best Texture Match"
-                     IsChecked="{Binding Path=BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.BestTextureMatch}}" />
-        
-        <RadioButton Grid.Column="1" Grid.Row="3"
-                     GroupName="BrushOptimization"
-                     Content="Fewest Brushes"
-                     IsChecked="{Binding Path=BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.FewestBrushes}}" />
+                        <CheckBox Grid.Column="0" Grid.Row="1"
+                                  Content="Merge Brushes"
+                                  IsChecked="{Binding MergeBrushes}"/>
+
+                        <CheckBox Grid.Column="0" Grid.Row="2"
+                                  Content="Include Liquids"
+                                  IsChecked="{Binding IncludeLiquids}"/>
+
+                        <Label Grid.Column="1" Grid.Row="0" Content="Brush Optimization:"/>
+
+                        <RadioButton Grid.Column="1" Grid.Row="1"
+                                     GroupName="BrushOptimization"
+                                     Content="Best Texture Match"
+                                     IsChecked="{Binding Path=BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.BestTextureMatch}}" />
+
+                        <RadioButton Grid.Column="1" Grid.Row="2"
+                                     GroupName="BrushOptimization"
+                                     Content="Fewest Brushes"
+                                     IsChecked="{Binding Path=BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.FewestBrushes}}" />
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Face-To-Brush Decompiler">
+                <Grid ColumnDefinitions="Auto">
+                    <Grid.RowDefinitions>
+                        <RowDefinition SharedSizeGroup="DecompilerTabItemHeight"/>
+                    </Grid.RowDefinitions>
+
+                    <Label Content="No Additional Options"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>

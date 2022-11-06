@@ -19,6 +19,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public Interaction<OpenDirectoryViewModel, string?> ShowBrowseDirectoryDialog { get; } = new();
 
+        public int SelectedStrategy { get; set; }
+
         public bool MergeBrushes { get; set; } = true;
 
         public bool IncludeLiquids { get; set; } = true;
@@ -40,7 +42,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             });
         }
 
-        public TreeDecompilerOptions ToTreeOptions()
+        public DecompilerOptions ToOptions()
         {
             return new(
                 MergeBrushes: MergeBrushes,

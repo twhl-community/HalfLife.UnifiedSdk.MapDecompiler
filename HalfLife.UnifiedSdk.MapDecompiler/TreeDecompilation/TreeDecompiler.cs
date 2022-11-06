@@ -14,7 +14,7 @@ using MapEntity = Sledge.Formats.Map.Objects.Entity;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public sealed partial class TreeDecompiler
+    internal sealed partial class TreeDecompiler
     {
         private const int PlaneHashes = 1024;
         private const int MaxRange = 4096;
@@ -27,7 +27,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
-        private readonly TreeDecompilerOptions _options;
+        private readonly DecompilerOptions _options;
 
         private readonly List<BspPlane> _bspPlanes;
         private readonly Faces _bspFaces;
@@ -54,7 +54,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private readonly int _originTextureIndex;
 
-        private TreeDecompiler(ILogger logger, BspFile bspFile, TreeDecompilerOptions options)
+        private TreeDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options)
         {
             _logger = logger;
             _bspFile = bspFile;
@@ -179,7 +179,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 .ToImmutableDictionary(t => t.Index, t => _bspTextures[t.TexInfo.MipTexture].Name);
         }
 
-        public static MapFile Decompile(ILogger logger, BspFile bspFile, TreeDecompilerOptions options, CancellationToken cancellationToken)
+        public static MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(bspFile);

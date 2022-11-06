@@ -6,7 +6,7 @@ using MapFace = Sledge.Formats.Map.Objects.Face;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public partial class TreeDecompiler
+    internal partial class TreeDecompiler
     {
         private void BSPBrushToMapBrush(BspBrush brush, DecompiledEntity entity, Vector3 origin)
         {
@@ -388,7 +388,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 //always take the first plane, then flip the points if necesary
                 var plane = _bspPlanes[planeNumber & ~1];
 
-                TextureUtils.TextureAxisFromPlane(plane, out var xAxis, out var yAxis);
+                TextureUtils.TextureAxisFromPlane(plane.Normal, out var xAxis, out var yAxis);
 
                 var uAxis = Vector3.Normalize(s);
                 var vAxis = Vector3.Normalize(t);
@@ -521,7 +521,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 var plane = _bspPlanes[side.PlaneNumber];
 
-                TextureUtils.TextureAxisFromPlane(plane, out var uAxis, out var vAxis);
+                TextureUtils.TextureAxisFromPlane(plane.Normal, out var uAxis, out var vAxis);
 
                 var texInfo = new TextureInfo
                 {

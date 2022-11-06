@@ -1,6 +1,5 @@
 ﻿using Sledge.Formats.Bsp.Objects;
 using System.Numerics;
-using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
@@ -57,14 +56,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             new Vector3(0, -1, 0), new Vector3(1, 0, 0), new Vector3(0, 0, -1)		// north wall
         };
 
-        public static void TextureAxisFromPlane(BspPlane pln, out Vector3 xv, out Vector3 yv)
+        public static void TextureAxisFromPlane(Vector3 normal, out Vector3 xv, out Vector3 yv)
         {
             float best = 0;
             int bestaxis = 0;
 
             for (int i = 0; i < 6; ++i)
             {
-                var dot = Vector3.Dot(pln.Normal, baseaxis[i * 3]);
+                var dot = Vector3.Dot(normal, baseaxis[i * 3]);
                 if (dot > best)
                 {
                     best = dot;
@@ -72,8 +71,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 }
             }
 
-            xv = baseaxis[bestaxis * 3 + 1];
-            yv = baseaxis[bestaxis * 3 + 2];
+            xv = baseaxis[(bestaxis * 3) + 1];
+            yv = baseaxis[(bestaxis * 3) + 2];
         }
     }
 }

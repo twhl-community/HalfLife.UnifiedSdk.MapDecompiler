@@ -1,7 +1,6 @@
 using Avalonia.Threading;
 using DynamicData;
 using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
-using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -186,7 +185,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             // Decompile each map one at a time.
             // Anything that relies on user settings should be created before starting the task to prevent race conditions.
             // Make sure to cache objects in local variables to prevent member variables from being captured.
-            var decompilerOptions = DecompilerOptions.ToTreeOptions();
+            var decompilerStrategy = DecompilerStrategies.Strategies[DecompilerOptions.SelectedStrategy];
+            var decompilerOptions = DecompilerOptions.ToOptions();
 
             // If we're starting a single job just activate the job log automatically.
             if (_jobTask.IsCompleted && jobs.Count == 1)
@@ -194,12 +194,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 CurrentJob = jobs[0];
             }
 
-            _jobTask = _jobTask.ContinueWith(_ => ExecuteJobs(jobs, decompilerOptions), TaskScheduler.Default);
+            _jobTask = _jobTask.ContinueWith(_ => ExecuteJobs(jobs, decompilerStrategy, decompilerOptions), TaskScheduler.Default);
 
             this.RaisePropertyChanged(nameof(CanCancelJobs));
         }
 
-        private void ExecuteJobs(List<MapDecompilerJob> jobs, TreeDecompilerOptions decompilerOptions)
+        private void ExecuteJobs(List<MapDecompilerJob> jobs, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions)
         {
             Dispatcher.UIThread.Post(() => _programLogger.Information("Starting {Count} new jobs", jobs.Count));
             _programStopwatch.Restart();
@@ -218,7 +218,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 {
                     Dispatcher.UIThread.Post(() => job.Status = MapDecompilerJobStatus.Converting);
 
-                    var result = _decompiler.Decompile(job, decompilerOptions, _jobCancellationTokenSource.Token);
+                    var result = _decompiler.Decompile(job, decompilerStrategy, decompilerOptions, _jobCancellationTokenSource.Token);
 
                     var timeElapsed = _programStopwatch.Elapsed;
 

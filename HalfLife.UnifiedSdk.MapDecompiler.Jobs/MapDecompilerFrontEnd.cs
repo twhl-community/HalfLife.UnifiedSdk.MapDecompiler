@@ -1,5 +1,4 @@
 ﻿using HalfLife.UnifiedSdk.MapDecompiler.Serialization;
-using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using Serilog;
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Map.Formats;
@@ -19,7 +18,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         private readonly QuakeMapFormat _format = new();
 
-        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, TreeDecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
 
@@ -38,7 +37,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 // If we were already cancelled.
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var (bspFile, mapFile) = DecompileBSPFile(logger, job, decompilerOptions, cancellationToken);
+                var (bspFile, mapFile) = DecompileBSPFile(logger, job, decompilerStrategy, decompilerOptions, cancellationToken);
                 WriteMapFile(logger, job, mapFile);
                 MaybeWriteWadFile(logger, job, bspFile);
                 status = MapDecompilerJobStatus.Done;
@@ -73,7 +72,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         }
 
         private (BspFile, MapFile) DecompileBSPFile(
-            ILogger logger, MapDecompilerJob job, TreeDecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+            ILogger logger, MapDecompilerJob job, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             logger.Information("Loading map from {BspFileName}", job.BspFileName);
 
@@ -85,9 +84,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
             LogTimeElapsed(logger);
 
-            logger.Information("Decompiling map");
+            logger.Information("Decompiling map using {DecompilerStrategy} strategy", decompilerStrategy.Name);
 
-            var mapFile = TreeDecompiler.Decompile(logger, bspFile, decompilerOptions, cancellationToken);
+            var mapFile = decompilerStrategy.Decompile(logger, bspFile, decompilerOptions, cancellationToken);
 
             LogTimeElapsed(logger);
 

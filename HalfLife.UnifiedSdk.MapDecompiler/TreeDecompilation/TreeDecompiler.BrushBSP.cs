@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    public partial class TreeDecompiler
+    internal partial class TreeDecompiler
     {
         private List<BspBrush> CreateBrushesFromBSP(int modelNumber)
         {

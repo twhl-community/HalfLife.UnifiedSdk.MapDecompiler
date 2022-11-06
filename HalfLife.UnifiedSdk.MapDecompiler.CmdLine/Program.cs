@@ -8,6 +8,30 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
     {
         static async Task<int> Main(string[] args)
         {
+            var decompilerStrategyOption = new Option<IDecompilerStrategy>("--strategy",
+                isDefault: true,
+                parseArgument: result =>
+                {
+                    if (result.Tokens.Count == 0)
+                    {
+                        return DecompilerStrategies.TreeDecompilerStrategy;
+                    }
+
+                    var decompilerStrategy = DecompilerStrategies.Strategies
+                        .SingleOrDefault(s => s.Name.Equals(result.Tokens.Single().Value, StringComparison.InvariantCultureIgnoreCase));
+
+                    if (decompilerStrategy is not null)
+                    {
+                        return decompilerStrategy;
+                    }
+                    else
+                    {
+                        result.ErrorMessage = "Unknown decompiler strategy.";
+                        return DecompilerStrategies.TreeDecompilerStrategy;
+                    }
+                },
+                description: "Which decompiler algorithm to use");
+
             var filesOption = new Option<IEnumerable<FileInfo>>("--files", description: "List of files to decompile")
             {
                 IsRequired = true,
@@ -33,6 +57,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
 
             var rootCommand = new RootCommand("Half-Life Unified SDK Map Decompiler")
             {
+                decompilerStrategyOption,
                 filesOption,
                 destinationOption,
                 mergeBrushesOption,
@@ -40,10 +65,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 brushOptimizationOption
             };
 
-            rootCommand.SetHandler((files, destination, mergeBrushes, includeLiquids, brushOptimization) =>
+            rootCommand.SetHandler((decompilerStrategy, files, destination, mergeBrushes, includeLiquids, brushOptimization) =>
             {
                 MapDecompilerFrontEnd decompiler = new();
-                TreeDecompilerOptions decompilerOptions = new()
+                DecompilerOptions decompilerOptions = new()
                 {
                     MergeBrushes = mergeBrushes,
                     IncludeLiquids = includeLiquids,
@@ -69,13 +94,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
 
                 Parallel.ForEach(jobs, job =>
                 {
-                    decompiler.Decompile(job, decompilerOptions, CancellationToken.None);
+                    decompiler.Decompile(job, decompilerStrategy, decompilerOptions, CancellationToken.None);
 
                     // Write completed log to console.
                     // Because we're decompiling multiple maps at the same time the log output would be mixed otherwise.
                     Console.WriteLine(job.Output);
                 });
-            }, filesOption, destinationOption, mergeBrushesOption, includeLiquidsOption, brushOptimizationOption);
+            }, decompilerStrategyOption, filesOption, destinationOption, mergeBrushesOption, includeLiquidsOption, brushOptimizationOption);
 
             return await rootCommand.InvokeAsync(args);
         }
