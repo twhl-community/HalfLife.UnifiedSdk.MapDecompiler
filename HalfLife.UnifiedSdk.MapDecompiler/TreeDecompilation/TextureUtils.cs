@@ -1,4 +1,5 @@
-﻿using Sledge.Formats.Bsp.Objects;
+﻿using Sledge.Formats;
+using Sledge.Formats.Bsp.Objects;
 using System.Numerics;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
@@ -73,6 +74,21 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             xv = baseaxis[(bestaxis * 3) + 1];
             yv = baseaxis[(bestaxis * 3) + 2];
+        }
+
+        /// <summary>
+        /// Based on https://github.com/LogicAndTrick/sledge/blob/a2ea69dfbd72350bc298d589d7645a647afd4303/Sledge.BspEditor/Primitives/TextureExtensions.cs#L13-L22
+        /// </summary>
+        /// <param name="normal"></param>
+        /// <param name="uAxis"></param>
+        /// <param name="vAxis"></param>
+        public static void TextureUVAxesFromNormal(Vector3 normal, out Vector3 uAxis, out Vector3 vAxis)
+        {
+            var closestAxis = normal.ClosestAxis();
+
+            var tempV = closestAxis == Vector3.UnitZ ? -Vector3.UnitY : -Vector3.UnitZ;
+            uAxis = Vector3.Normalize(Vector3.Cross(normal, tempV));
+            vAxis = Vector3.Normalize(Vector3.Cross(uAxis, normal));
         }
     }
 }
