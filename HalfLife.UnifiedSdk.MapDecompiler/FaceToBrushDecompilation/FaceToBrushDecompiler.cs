@@ -156,6 +156,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                     entity.Children.Add(brush);
                 }
             }
+
+            if (origin != Vector3.Zero)
+            {
+                entity.Children.Add(CreateOriginBrush(origin));
+            }
         }
 
         private Solid? CreateMapBrush(int modelNumber, int faceIndex, BspFace face, Vector3 origin)
@@ -368,6 +373,72 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             var v2 = _bspVertices[side ? edge.End : edge.Start];
 
             return (v1, v2);
+        }
+
+        // Vertices for a face facing down the X axis, without size applied.
+        private static readonly ReadOnlyMemory<Vector3> FaceVertices = new[]
+        {
+            new Vector3(1, 1, 1),
+            new Vector3(1, 1, -1),
+            new Vector3(1, -1, -1)
+        };
+
+        private const float RotationAmount = MathF.PI / 2;
+
+        private static readonly ReadOnlyMemory<Matrix4x4> Rotations = new[]
+        {
+            Matrix4x4.Identity,
+            Matrix4x4.CreateRotationZ(RotationAmount),
+            Matrix4x4.CreateRotationY(RotationAmount),
+            Matrix4x4.CreateRotationZ(RotationAmount * 2),
+            Matrix4x4.CreateRotationZ(RotationAmount * 3),
+            Matrix4x4.CreateRotationY(RotationAmount * 3)
+        };
+
+        private static Solid CreateOriginBrush(Vector3 origin)
+        {
+            //TODO: merge with constant in Tree decompiler.
+            const float originBrushSize = 16;
+
+            Solid solid = new();
+
+            // Create six faces, each facing along a major axis.
+            var faceVertices = FaceVertices.Span;
+            var rotations = Rotations.Span;
+
+            for (int i = 0; i < 6; ++i)
+            {
+                var normal = Vector3.Zero;
+
+                Vector3Utils.SetByIndex(ref normal, i % 3, i >= 3 ? -1 : 1);
+
+                TextureUtils.TextureUVAxesFromNormal(normal, out var uAxis, out var vAxis);
+
+                MapFace face = new()
+                {
+                    TextureName = "ORIGIN",
+                    XScale = 1,
+                    YScale = 1,
+                    UAxis = uAxis,
+                    VAxis = vAxis
+                };
+
+                ref readonly var rotation = ref rotations[i];
+
+                // Generate 3 vertices on this face's plane.
+                foreach (ref readonly var sourceVertex in faceVertices)
+                {
+                    var vertex = sourceVertex * originBrushSize;
+
+                    vertex = Vector3.Transform(vertex, rotation);
+
+                    face.Vertices.Add(vertex + origin);
+                }
+
+                solid.Faces.Add(face);
+            }
+
+            return solid;
         }
     }
 }
