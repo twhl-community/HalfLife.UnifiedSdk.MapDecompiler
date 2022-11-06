@@ -18,7 +18,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         private readonly QuakeMapFormat _format = new();
 
-        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
 
@@ -72,7 +72,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         }
 
         private (BspFile, MapFile) DecompileBSPFile(
-            ILogger logger, MapDecompilerJob job, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+            ILogger logger, MapDecompilerJob job, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
             logger.Information("Loading map from {BspFileName}", job.BspFileName);
 

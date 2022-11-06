@@ -8,7 +8,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
     {
         static async Task<int> Main(string[] args)
         {
-            var decompilerStrategyOption = new Option<IDecompilerStrategy>("--strategy",
+            var decompilerStrategyOption = new Option<DecompilerStrategy>("--strategy",
                 parseArgument: result =>
                 {
                     if (result.Tokens.Count == 0)
@@ -31,6 +31,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 },
                 isDefault: true,
                 description: "Which decompiler algorithm to use");
+
+            decompilerStrategyOption.FromAmong(DecompilerStrategies.Strategies.Select(s => s.Name).ToArray());
 
             var filesArgument = new Argument<IEnumerable<FileInfo>>("files", description: "List of files to decompile");
 

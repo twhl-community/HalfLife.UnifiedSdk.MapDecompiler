@@ -6,11 +6,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     public static class DecompilerStrategies
     {
-        public static IDecompilerStrategy TreeDecompilerStrategy { get; } = new TreeDecompilerStrategy();
+        public static DecompilerStrategy TreeDecompilerStrategy { get; } = new TreeDecompilerStrategy();
 
-        public static IDecompilerStrategy FaceToBrushDecompilerStrategy { get; } = new FaceToBrushDecompilerStrategy();
+        public static DecompilerStrategy FaceToBrushDecompilerStrategy { get; } = new FaceToBrushDecompilerStrategy();
 
-        public static ImmutableArray<IDecompilerStrategy> Strategies { get; } = ImmutableArray.Create(
+        public static ImmutableArray<DecompilerStrategy> Strategies { get; } = ImmutableArray.Create(
             TreeDecompilerStrategy,
             FaceToBrushDecompilerStrategy);
     }

@@ -217,7 +217,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             QueueJobs(new() { job });
         }
 
-        private void ExecuteJobs(List<MapDecompilerJob> jobs, IDecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions)
+        private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions)
         {
             Dispatcher.UIThread.Post(() => _programLogger.Information("Starting {Count} new jobs", jobs.Count));
             _programStopwatch.Restart();

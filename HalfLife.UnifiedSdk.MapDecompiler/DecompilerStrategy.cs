@@ -7,12 +7,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
     /// <summary>
     /// Represents a particular decompiler algorithm.
     /// </summary>
-    public interface IDecompilerStrategy
+    public abstract class DecompilerStrategy
     {
         /// <summary>
         /// Name used to select strategies.
         /// </summary>
-        string Name { get; }
+        public abstract string Name { get; }
 
         /// <summary>
         /// Decompiles the given BSP file and returns a map file that represents the decompiled output.
@@ -21,6 +21,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
         /// <param name="bspFile"></param>
         /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
-        MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken);
+        public abstract MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken);
+
+        // Used to print the strategy name on the command line.
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

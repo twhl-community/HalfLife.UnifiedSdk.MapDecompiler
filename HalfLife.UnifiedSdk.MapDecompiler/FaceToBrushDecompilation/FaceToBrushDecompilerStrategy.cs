@@ -4,11 +4,11 @@ using Sledge.Formats.Map.Objects;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 {
-    internal sealed class FaceToBrushDecompilerStrategy : IDecompilerStrategy
+    internal sealed class FaceToBrushDecompilerStrategy : DecompilerStrategy
     {
-        public string Name => "FaceToBrush";
+        public override string Name => "FaceToBrush";
 
-        public MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
+        public override MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
             return FaceToBrushDecompiler.Decompile(logger, bspFile, cancellationToken);
         }
