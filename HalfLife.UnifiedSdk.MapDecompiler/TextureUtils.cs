@@ -2,7 +2,7 @@
 using Sledge.Formats.Bsp.Objects;
 using System.Numerics;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
+namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     internal static class TextureUtils
     {
@@ -72,8 +72,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 }
             }
 
-            xv = baseaxis[(bestaxis * 3) + 1];
-            yv = baseaxis[(bestaxis * 3) + 2];
+            xv = baseaxis[bestaxis * 3 + 1];
+            yv = baseaxis[bestaxis * 3 + 2];
         }
 
         /// <summary>

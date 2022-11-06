@@ -1,5 +1,4 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
-using Serilog;
+﻿using Serilog;
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Bsp.Lumps;
 using Sledge.Formats.Map.Objects;
