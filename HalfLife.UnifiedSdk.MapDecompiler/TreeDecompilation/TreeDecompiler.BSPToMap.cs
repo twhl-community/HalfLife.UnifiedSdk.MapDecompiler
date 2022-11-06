@@ -397,8 +397,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                 if (MathF.Abs(Vector3.Dot(plane.Normal, textureAxis)) < 0.01f)
                 {
-                    // Texture axis is perpendicular to plane. Use world-aligned axis.
-                    TextureUtils.TextureUVAxesFromNormal(Vector3.Abs(plane.Normal), out uAxis, out vAxis);
+                    // Texture axis is perpendicular to plane. Use face-aligned axis.
+                    TextureUtils.TextureUVAxesFromNormal(plane.Normal, out uAxis, out vAxis);
                 }
 
                 //calculate texture shift done by entity origin
