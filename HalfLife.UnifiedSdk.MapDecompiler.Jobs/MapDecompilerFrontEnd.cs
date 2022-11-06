@@ -132,6 +132,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                     wadFile.AddLump(texture.Name, lump);
                 }
 
+                logger.Information("Added {Count} textures", wadFile.Lumps.Count());
+
                 using var stream = File.Open(wadFileName, FileMode.Create);
 
                 wadFile.Write(stream);
