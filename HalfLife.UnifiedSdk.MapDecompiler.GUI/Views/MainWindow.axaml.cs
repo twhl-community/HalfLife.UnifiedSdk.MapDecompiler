@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
 using ReactiveUI;
@@ -20,6 +21,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
                 d(ViewModel!.ShowCancelJobsDialog.RegisterHandler(DoShowCancelJobsDialogAsync));
                 d(ViewModel!.DecompilerOptions.ShowBrowseDirectoryDialog.RegisterHandler(DoShowOpenDirectoryDialogAsync));
             });
+        }
+
+        public async void About_Click(object? sender, RoutedEventArgs e)
+        {
+            var aboutDialog = new AboutDialog();
+
+            await aboutDialog.ShowDialog(this);
         }
 
         // See https://stackoverflow.com/a/49013345/1306648

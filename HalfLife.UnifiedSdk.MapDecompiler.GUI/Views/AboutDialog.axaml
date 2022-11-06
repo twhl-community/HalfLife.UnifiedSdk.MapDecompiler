@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="HalfLife.UnifiedSdk.MapDecompiler.GUI.Views.AboutDialog"
+        Title="About Half-Life Unified SDK Map Decompiler"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        ShowInTaskbar="False">
+    <StackPanel>
+        <Label Margin="20">
+Half-Life Unified SDK Map Decompiler
+
+2022 Sam Vanheer
+
+Email: sam.vanheer@outlook.com
+
+Based on bspc made by id Software
+Copyright (C) 1999-2005 Id Software, Inc.
+All rights reserved.
+
+Inspired by WinBSPC made by Mr Elusive
+Inspired by BSPTwoMap made by Skyler 'Zipster' York
+
+Uses Sledge level editor code by Daniel 'Logic &amp; Trick' Walder
+Copyright (c) 2018, Daniel Walder
+All rights reserved.
+        </Label>
+        
+        <Button Content="Ok" Click="Button_Ok"
+                HorizontalAlignment="Right" HorizontalContentAlignment="Center"
+                Width="100"/>
+    </StackPanel>
+</Window>
