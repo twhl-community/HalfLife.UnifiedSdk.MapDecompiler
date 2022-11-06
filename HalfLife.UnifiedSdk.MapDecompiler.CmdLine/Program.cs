@@ -9,7 +9,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
         static async Task<int> Main(string[] args)
         {
             var decompilerStrategyOption = new Option<IDecompilerStrategy>("--strategy",
-                isDefault: true,
                 parseArgument: result =>
                 {
                     if (result.Tokens.Count == 0)
@@ -30,13 +29,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                         return DecompilerStrategies.TreeDecompilerStrategy;
                     }
                 },
+                isDefault: true,
                 description: "Which decompiler algorithm to use");
 
-            var filesOption = new Option<IEnumerable<FileInfo>>("--files", description: "List of files to decompile")
-            {
-                IsRequired = true,
-                AllowMultipleArgumentsPerToken = true
-            };
+            var filesArgument = new Argument<IEnumerable<FileInfo>>("files", description: "List of files to decompile");
 
             var destinationOption = new Option<DirectoryInfo>(
                 "--destination",
@@ -58,15 +54,33 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
             var rootCommand = new RootCommand("Half-Life Unified SDK Map Decompiler")
             {
                 decompilerStrategyOption,
-                filesOption,
                 destinationOption,
                 mergeBrushesOption,
                 includeLiquidsOption,
-                brushOptimizationOption
+                brushOptimizationOption,
+                filesArgument
             };
 
-            rootCommand.SetHandler((decompilerStrategy, files, destination, mergeBrushes, includeLiquids, brushOptimization) =>
+            rootCommand.SetHandler((decompilerStrategy, destination, mergeBrushes, includeLiquids, brushOptimization, files) =>
             {
+                if (!files.Any())
+                {
+                    Console.WriteLine("Nothing to decompile");
+                    return;
+                }
+
+                var groupedFiles = files.GroupBy(f => f.FullName);
+
+                foreach (var group in groupedFiles)
+                {
+                    if( group.Count() > 1)
+                    {
+                        Console.WriteLine($"Warning: file name \"{group.Key}\" specified more than once, ignoring duplicates");
+                    }
+                }
+
+                var uniqueFiles = groupedFiles.Select(g => g.Key);
+
                 MapDecompilerFrontEnd decompiler = new();
                 DecompilerOptions decompilerOptions = new()
                 {
@@ -77,10 +91,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
 
                 var destinationDirectory = destination.FullName;
 
-                var jobs = files
+                var jobs = uniqueFiles
                     .Select(f =>
                     {
-                        var job = new MapDecompilerJob(f.FullName, destinationDirectory)
+                        var job = new MapDecompilerJob(f, destinationDirectory)
                         {
                             // TODO: figure out a way to make Output non-null all the time.
                             Output = string.Empty
@@ -100,7 +114,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                     // Because we're decompiling multiple maps at the same time the log output would be mixed otherwise.
                     Console.WriteLine(job.Output);
                 });
-            }, decompilerStrategyOption, filesOption, destinationOption, mergeBrushesOption, includeLiquidsOption, brushOptimizationOption);
+            }, decompilerStrategyOption, destinationOption, mergeBrushesOption, includeLiquidsOption, brushOptimizationOption, filesArgument);
 
             return await rootCommand.InvokeAsync(args);
         }
