@@ -4,6 +4,7 @@ using Sledge.Formats.Bsp;
 using Sledge.Formats.Map.Formats;
 using Sledge.Formats.Map.Objects;
 using Sledge.Formats.Texture.Wad;
+using Sledge.Formats.Texture.Wad.Lumps;
 using System.Diagnostics;
 using WadVersion = Sledge.Formats.Texture.Wad.Version;
 
@@ -125,7 +126,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 {
                     logger.Information("Adding texture {Name}", texture.Name);
 
-                    JobMipTextureLump lump = new()
+                    MipTextureLump lump = new()
                     {
                         Name = texture.Name,
                         Width = texture.Width,
