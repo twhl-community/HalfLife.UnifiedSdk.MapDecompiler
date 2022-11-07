@@ -1061,12 +1061,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 w = w.ChopWindingInPlace(normal, dist, 0.9f); //CLIP_EPSILON
             }
 
-            if (w is not null)
-            {
-                return w.Area();
-            }
-
-            return 0;
+            return w?.Area() ?? 0;
         }
 
         /// <summary>

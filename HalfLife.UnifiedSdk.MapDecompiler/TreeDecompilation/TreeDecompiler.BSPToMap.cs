@@ -125,7 +125,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             bool CheckBounds(float min, float max)
             {
-                //IDBUG: all the indexes into the mins and maxs were zero (not using i)
                 if (min < -MaxMapBounds || max > MaxMapBounds)
                 {
                     _logger.Information("entity {EntityIndex}, brush {BrushIndex}: bounds out of range", entity.Index, ob.Index);
