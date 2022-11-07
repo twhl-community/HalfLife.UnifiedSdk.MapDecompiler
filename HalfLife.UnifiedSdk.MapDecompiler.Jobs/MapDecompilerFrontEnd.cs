@@ -20,11 +20,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         public MapDecompilerJobStatus Decompile(MapDecompilerJob job, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
         {
+            var logFileName = job.GetOutputFileName(MapDecompilerJobConstants.LogExtension);
+
+            File.Delete(logFileName);
+
             const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
 
             using var logger = new LoggerConfiguration()
                 .WriteTo.Sink(new ForwardingSink(job.LogMessage, outputTemplate))
-                .WriteTo.File(job.GetOutputFileName(MapDecompilerJobConstants.LogExtension), outputTemplate: outputTemplate)
+                .WriteTo.File(logFileName, outputTemplate: outputTemplate)
                 .MinimumLevel.Information()
                 .CreateLogger();
 
