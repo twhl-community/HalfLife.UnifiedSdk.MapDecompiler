@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -9,9 +10,15 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False"
         ShowInTaskbar="False">
+    <Design.DataContext>
+        <vm:AboutDialogViewModel/>
+    </Design.DataContext>
     <StackPanel>
         <Label Margin="20">
-Half-Life Unified SDK Map Decompiler
+            <Label.Content>
+                <Binding Path="Version">
+                    <Binding.StringFormat>
+Half-Life Unified SDK Map Decompiler {0}
 
 2022 Sam Vanheer
 
@@ -27,6 +34,9 @@ Inspired by BSPTwoMap made by Skyler 'Zipster' York
 Uses Sledge level editor code by Daniel 'Logic &amp; Trick' Walder
 Copyright (c) 2018, Daniel Walder
 All rights reserved.
+                    </Binding.StringFormat>
+                </Binding>
+            </Label.Content>
         </Label>
         
         <Button Content="Ok" Click="Button_Ok"

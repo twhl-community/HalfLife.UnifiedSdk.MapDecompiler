@@ -6,6 +6,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
 {
     public static class MapSerialization
     {
+        public static string Version { get; } = FileVersionInfo.GetVersionInfo(typeof(MapSerialization).Assembly.Location).FileVersion ?? "Unknown version";
+
         public static void SerializeMap(IMapFormat format, Stream stream, MapFile mapFile)
         {
             ArgumentNullException.ThrowIfNull(format);
@@ -15,12 +17,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
             {
                 using var writer = new StreamWriter(stream, leaveOpen: true);
 
-                var assembly = typeof(MapSerialization).Assembly;
-                var version = FileVersionInfo.GetVersionInfo(assembly.Location).FileVersion ?? "Unknown version";
-
                 writer.WriteLine("//=====================================================");
                 writer.WriteLine("//");
-                writer.WriteLine($"// map file created with HalfLife.UnifiedSdk.MapDecompiler {version}");
+                writer.WriteLine($"// map file created with HalfLife.UnifiedSdk.MapDecompiler {Version}");
                 writer.WriteLine("//");
                 writer.WriteLine("// MapDecompiler is designed to decompile material in which you own the copyright");
                 writer.WriteLine("// or have obtained permission to decompile from the copyright owner. Unless");
