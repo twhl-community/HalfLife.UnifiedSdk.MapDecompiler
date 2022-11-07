@@ -32,6 +32,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 .MinimumLevel.Information()
                 .CreateLogger();
 
+            logger.Information("Job started on {TimeStamp}", DateTimeOffset.Now);
+
             _stopWatch.Restart();
 
             var status = MapDecompilerJobStatus.Failed;
