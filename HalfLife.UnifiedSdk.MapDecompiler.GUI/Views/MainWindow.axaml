@@ -20,6 +20,12 @@
 			<MenuItem Header="_File">
 				<MenuItem Header="_Convert" Command="{Binding ConvertFilesCommand}"/>
 			</MenuItem>
+			<MenuItem Header="_View">
+				<MenuItem Header="Theme">
+					<MenuItem Header="Light" Click="Theme_ChangeToLight"/>
+					<MenuItem Header="Dark" Click="Theme_ChangeToDark"/>
+				</MenuItem>
+			</MenuItem>
 			<MenuItem Header="_Help">
 				<MenuItem Header="_About" Click="About_Click"/>
 			</MenuItem>

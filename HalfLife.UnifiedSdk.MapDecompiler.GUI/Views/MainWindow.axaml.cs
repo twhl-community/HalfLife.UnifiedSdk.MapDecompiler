@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
+using Avalonia.Themes.Fluent;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
 using ReactiveUI;
 using System.ComponentModel;
@@ -21,6 +23,22 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
                 d(ViewModel!.ShowCancelJobsDialog.RegisterHandler(DoShowCancelJobsDialogAsync));
                 d(ViewModel!.DecompilerOptions.ShowBrowseDirectoryDialog.RegisterHandler(DoShowOpenDirectoryDialogAsync));
             });
+        }
+
+        public void Theme_ChangeToLight(object? sender, RoutedEventArgs e)
+        {
+            if (Application.Current!.Styles[0] is FluentTheme theme)
+            {
+                theme.Mode = FluentThemeMode.Light;
+            }
+        }
+
+        public void Theme_ChangeToDark(object? sender, RoutedEventArgs e)
+        {
+            if (Application.Current!.Styles[0] is FluentTheme theme)
+            {
+                theme.Mode = FluentThemeMode.Dark;
+            }
         }
 
         public async void About_Click(object? sender, RoutedEventArgs e)
