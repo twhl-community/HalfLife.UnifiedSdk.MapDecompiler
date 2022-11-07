@@ -297,7 +297,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             bool side = edgenum > 0;
 
             //if the face plane is flipped
-            int absEdgeIndex = (int)MathF.Abs(edgenum);
+            int absEdgeIndex = Math.Abs(edgenum);
             var edge = _bspEdges[absEdgeIndex];
             var v1 = _bspVertices[side ? edge.Start : edge.End];
             var v2 = _bspVertices[side ? edge.End : edge.Start];

@@ -149,7 +149,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             foreach (var face in _bspFaces)
             {
-                face.Plane = (ushort)remap[(int)face.Plane];
+                face.Plane = (ushort)remap[face.Plane];
             }
 
             // Add existing planes to hash.
