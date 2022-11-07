@@ -113,8 +113,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             }
 
             //calculate texture shift done by entity origin
-            var originXShift = Vector3.Dot(origin, xAxis);
-            var originYShift = Vector3.Dot(origin, yAxis);
+            var originXShift = Vector3.Dot(origin, s3);
+            var originYShift = Vector3.Dot(origin, t3);
 
             //the texture shift without origin shift
             var xShift = sw - originXShift;
