@@ -1,5 +1,4 @@
 ﻿using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
-using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
 using System.CommandLine;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
@@ -75,7 +74,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
 
                 foreach (var group in groupedFiles)
                 {
-                    if( group.Count() > 1)
+                    if (group.Count() > 1)
                     {
                         Console.WriteLine($"Warning: file name \"{group.Key}\" specified more than once, ignoring duplicates");
                     }

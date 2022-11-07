@@ -1,4 +1,4 @@
-﻿namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     public enum BrushOptimization
     {

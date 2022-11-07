@@ -1,6 +1,4 @@
-﻿using HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation;
-
-namespace HalfLife.UnifiedSdk.MapDecompiler
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     /// <summary>
     /// Options for decompiler algorithms. Not all options apply to all decompilers.
