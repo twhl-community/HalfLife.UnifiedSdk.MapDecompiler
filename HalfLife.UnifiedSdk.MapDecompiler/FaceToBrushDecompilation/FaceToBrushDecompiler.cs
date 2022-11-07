@@ -19,15 +19,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
 
-        private readonly Planes _bspPlanes;
         private readonly Faces _bspFaces;
-        private readonly Nodes _bspNodes;
         private readonly Texinfo _bspTexInfo;
         private readonly Textures _bspTextures;
         private readonly Surfedges _bspSurfedges;
         private readonly Edges _bspEdges;
         private readonly Vertices _bspVertices;
-        private readonly Leaves _bspLeaves;
         private readonly Entities _bspEntities;
         private readonly Models _bspModels;
 
@@ -37,15 +34,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             _bspFile = bspFile;
 
             // Cache lumps to avoid lookup overhead.
-            _bspPlanes = _bspFile.Planes;
             _bspFaces = _bspFile.Faces;
-            _bspNodes = _bspFile.Nodes;
             _bspTexInfo = _bspFile.Texinfo;
             _bspTextures = _bspFile.Textures;
             _bspSurfedges = _bspFile.Surfedges;
             _bspEdges = _bspFile.Edges;
             _bspVertices = _bspFile.Vertices;
-            _bspLeaves = _bspFile.Leaves;
             _bspEntities = _bspFile.Entities;
             _bspModels = _bspFile.Models;
         }
