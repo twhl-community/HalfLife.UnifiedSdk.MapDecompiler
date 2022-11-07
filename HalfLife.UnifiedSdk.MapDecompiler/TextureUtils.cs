@@ -1,8 +1,5 @@
 ﻿using Sledge.Formats;
-using Sledge.Formats.Bsp.Lumps;
 using Sledge.Formats.Bsp.Objects;
-using Sledge.Formats.Map.Objects;
-using System.Drawing;
 using System.Numerics;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler
