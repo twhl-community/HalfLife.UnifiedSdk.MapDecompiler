@@ -464,7 +464,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     XShift = xShift,
                     YShift = yShift,
                     Rotation = rotate,
-                    Plane = new(plane.Normal, plane.Distance),
                     UAxis = uAxis,
                     VAxis = vAxis
                 };
