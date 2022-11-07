@@ -22,10 +22,6 @@
 
         public Winding? Winding;
 
-        public BspSide? Original;
-
-        public int LightInfo;
-
         public int Contents;
 
         public int Surface;
@@ -41,8 +37,6 @@
             PlaneNumber = other.PlaneNumber;
             TextureInfo = other.TextureInfo;
             Winding = other.Winding?.Clone();
-            Original = other.Original;
-            LightInfo = other.LightInfo;
             Contents = other.Contents;
             Surface = other.Surface;
             Flags = other.Flags;

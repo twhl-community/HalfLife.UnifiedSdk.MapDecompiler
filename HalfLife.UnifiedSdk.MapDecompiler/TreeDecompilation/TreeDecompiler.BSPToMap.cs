@@ -190,7 +190,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                         {
                             PlaneNumber = FindFloatPlane(normal, dist),
                             TextureInfo = firstSide.TextureInfo,
-                            LightInfo = firstSide.LightInfo,
                             Contents = firstSide.Contents,
                             Flags = SideFlag.Bevel
                         };
@@ -311,7 +310,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                             {
                                 PlaneNumber = FindFloatPlane(normal, dist),
                                 TextureInfo = firstSide.TextureInfo,
-                                LightInfo = firstSide.LightInfo,
                                 Contents = firstSide.Contents,
                                 Flags = SideFlag.Bevel
                             };
