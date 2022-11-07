@@ -350,24 +350,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 var textureInfo = side.TextureInfo != TexInfoNode ? _bspTexInfo[side.TextureInfo] : ClipTextureInfo;
                 var texture = textureInfo.MipTexture != -1 ? _bspTextures[textureInfo.MipTexture] : ClipTexture;
 
-                var s = new Vector3(textureInfo.S.X, textureInfo.S.Y, textureInfo.S.Z);
-                var t = new Vector3(textureInfo.T.X, textureInfo.T.Y, textureInfo.T.Z);
-
-                float sw = textureInfo.S.W;
-                float tw = textureInfo.T.W;
+                var s = textureInfo.S;
+                var t = textureInfo.T;
 
                 //make sure the two vectors aren't of zero length otherwise use the default
                 //vector to prevent a divide by zero in the map writing
-                if (s.Length() < 0.01)
+                if (new Vector3(textureInfo.S.X, textureInfo.S.Y, textureInfo.S.Z).Length() < 0.01)
                 {
-                    s = Vector3.UnitX;
-                    sw = 0;
+                    s = Vector4.UnitX;
                 }
 
-                if (t.Length() < 0.01)
+                if (new Vector3(textureInfo.T.X, textureInfo.T.Y, textureInfo.T.Z).Length() < 0.01)
                 {
-                    t = Vector3.UnitX;
-                    tw = 0;
+                    t = Vector4.UnitX;
                 }
 
                 int planeNumber;
@@ -388,84 +383,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 //always take the first plane, then flip the points if necesary
                 var plane = _bspPlanes[planeNumber & ~1];
 
-                TextureUtils.TextureAxisFromPlane(plane.Normal, out var xAxis, out var yAxis);
-
-                var uAxis = Vector3.Normalize(s);
-                var vAxis = Vector3.Normalize(t);
-
-                var textureAxis = Vector3.Cross(uAxis, vAxis);
-
-                if (MathF.Abs(Vector3.Dot(plane.Normal, textureAxis)) < 0.01f)
-                {
-                    // Texture axis is perpendicular to plane. Use face-aligned axis.
-                    TextureUtils.TextureUVAxesFromNormal(plane.Normal, out uAxis, out vAxis);
-                }
-
-                //calculate texture shift done by entity origin
-                var originXShift = Vector3.Dot(origin, xAxis);
-                var originYShift = Vector3.Dot(origin, yAxis);
-
-                //the texture shift without origin shift
-                var xShift = sw - originXShift;
-                var yShift = tw - originYShift;
-
-                int sv = 2;
-
-                if (xAxis.X != 0)
-                {
-                    sv = 0;
-                }
-                else if (xAxis.Y != 0)
-                {
-                    sv = 1;
-                }
-
-                int tv = 2;
-
-                if (yAxis.X != 0)
-                {
-                    tv = 0;
-                }
-                else if (yAxis.Y != 0)
-                {
-                    tv = 1;
-                }
-
-                //calculate rotation of texture
-                float ang1 = Vector3Utils.GetByIndex(ref uAxis, tv) switch
-                {
-                    0 => Vector3Utils.GetByIndex(ref uAxis, sv) > 0 ? 90.0f : -90.0f,
-                    _ => MathF.Atan2(Vector3Utils.GetByIndex(ref uAxis, sv), Vector3Utils.GetByIndex(ref uAxis, tv)) * 180 / MathF.PI
-                };
-
-                if (ang1 < 0) ang1 += 360;
-                if (ang1 >= 360) ang1 -= 360;
-
-                float ang2 = Vector3Utils.GetByIndex(ref xAxis, tv) switch
-                {
-                    0 => Vector3Utils.GetByIndex(ref xAxis, sv) > 0 ? 90.0f : -90.0f,
-                    _ => MathF.Atan2(Vector3Utils.GetByIndex(ref xAxis, sv), Vector3Utils.GetByIndex(ref xAxis, tv)) * 180 / MathF.PI
-                };
-
-                if (ang2 < 0) ang2 += 360;
-                if (ang2 >= 360) ang2 -= 360;
-
-                float rotate = ang2 - ang1;
-
-                if (rotate < 0) rotate += 360;
-                if (rotate >= 360) rotate -= 360;
+                var textureProperties = TextureUtils.CalculateTextureProperties(s, t, origin, plane.Normal);
 
                 var face = new MapFace
                 {
                     TextureName = texture.Name,
                     //the scaling of the texture
-                    XScale = 1 / s.Length(),
-                    YScale = 1 / t.Length(),
-                    XShift = xShift,
-                    YShift = yShift,
-                    Rotation = rotate,
-                    UAxis = uAxis,
-                    VAxis = vAxis
+                    XScale = textureProperties.XScale,
+                    YScale = textureProperties.YScale,
+                    XShift = textureProperties.XShift,
+                    YShift = textureProperties.YShift,
+                    Rotation = textureProperties.Rotation,
+                    UAxis = textureProperties.UAxis,
+                    VAxis = textureProperties.VAxis
                 };
 
                 var w = Winding.BaseWindingForPlane(plane.Normal, plane.Distance);

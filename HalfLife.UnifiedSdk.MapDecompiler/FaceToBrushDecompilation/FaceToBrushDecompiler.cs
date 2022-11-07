@@ -208,83 +208,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             var textureInfo = _bspTexInfo[face.TextureInfo];
             var texture = _bspTextures[textureInfo.MipTexture];
 
-            var s = new Vector3(textureInfo.S.X, textureInfo.S.Y, textureInfo.S.Z);
-            var t = new Vector3(textureInfo.T.X, textureInfo.T.Y, textureInfo.T.Z);
+            var textureProperties = TextureUtils.CalculateTextureProperties(textureInfo.S, textureInfo.T, origin, planeNormal);
 
-            float sw = textureInfo.S.W;
-            float tw = textureInfo.T.W;
-
-            TextureUtils.TextureAxisFromPlane(planeNormal, out var xAxis, out var yAxis);
-
-            var uAxis = Vector3.Normalize(s);
-            var vAxis = Vector3.Normalize(t);
-
-            //calculate texture shift done by entity origin
-            var originXShift = Vector3.Dot(origin, xAxis);
-            var originYShift = Vector3.Dot(origin, yAxis);
-
-            //the texture shift without origin shift
-            var xShift = sw - originXShift;
-            var yShift = tw - originYShift;
-
-            int sv = 2;
-
-            if (xAxis.X != 0)
-            {
-                sv = 0;
-            }
-            else if (xAxis.Y != 0)
-            {
-                sv = 1;
-            }
-
-            int tv = 2;
-
-            if (yAxis.X != 0)
-            {
-                tv = 0;
-            }
-            else if (yAxis.Y != 0)
-            {
-                tv = 1;
-            }
-
-            //calculate rotation of texture
-            float ang1 = Vector3Utils.GetByIndex(ref uAxis, tv) switch
-            {
-                0 => Vector3Utils.GetByIndex(ref uAxis, sv) > 0 ? 90.0f : -90.0f,
-                _ => MathF.Atan2(Vector3Utils.GetByIndex(ref uAxis, sv), Vector3Utils.GetByIndex(ref uAxis, tv)) * 180 / MathF.PI
-            };
-
-            if (ang1 < 0) ang1 += 360;
-            if (ang1 >= 360) ang1 -= 360;
-
-            float ang2 = Vector3Utils.GetByIndex(ref xAxis, tv) switch
-            {
-                0 => Vector3Utils.GetByIndex(ref xAxis, sv) > 0 ? 90.0f : -90.0f,
-                _ => MathF.Atan2(Vector3Utils.GetByIndex(ref xAxis, sv), Vector3Utils.GetByIndex(ref xAxis, tv)) * 180 / MathF.PI
-            };
-
-            if (ang2 < 0) ang2 += 360;
-            if (ang2 >= 360) ang2 -= 360;
-
-            float rotate = ang2 - ang1;
-
-            if (rotate < 0) rotate += 360;
-            if (rotate >= 360) rotate -= 360;
-
-            // Create front face from edges.
             MapFace frontFace = new()
             {
                 TextureName = texture.Name,
                 //the scaling of the texture
-                XScale = 1 / s.Length(),
-                YScale = 1 / t.Length(),
-                XShift = xShift,
-                YShift = yShift,
-                Rotation = rotate,
-                UAxis = uAxis,
-                VAxis = vAxis
+                XScale = textureProperties.XScale,
+                YScale = textureProperties.YScale,
+                XShift = textureProperties.XShift,
+                YShift = textureProperties.YShift,
+                Rotation = textureProperties.Rotation,
+                UAxis = textureProperties.UAxis,
+                VAxis = textureProperties.VAxis
             };
 
             frontFace.Vertices.Add(firstFrontVertex);
@@ -294,15 +230,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             // Create back face from front face.
             MapFace backFace = new()
             {
-                TextureName = texture.Name,
+                TextureName = frontFace.TextureName,
                 //the scaling of the texture
-                XScale = 1 / s.Length(),
-                YScale = 1 / t.Length(),
-                XShift = xShift,
-                YShift = yShift,
-                Rotation = rotate,
-                UAxis = uAxis,
-                VAxis = vAxis
+                XScale = frontFace.XScale,
+                YScale = frontFace.YScale,
+                XShift = frontFace.XShift,
+                YShift = frontFace.YShift,
+                Rotation = frontFace.Rotation,
+                UAxis = frontFace.UAxis,
+                VAxis = frontFace.VAxis
             };
 
             var normal = planeNormal * -BrushThickness;
@@ -327,7 +263,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 var sidePlaneNormal = Vector3.Cross(Vector3.Normalize(firstSideVertex - secondSideVertex), Vector3.Normalize(thirdSideVertex - secondSideVertex));
 
                 // Align side to face.
-                TextureUtils.TextureUVAxesFromNormal(sidePlaneNormal, out uAxis, out vAxis);
+                TextureUtils.TextureUVAxesFromNormal(sidePlaneNormal, out var uAxis, out var vAxis);
 
                 MapFace sideFace = new()
                 {
