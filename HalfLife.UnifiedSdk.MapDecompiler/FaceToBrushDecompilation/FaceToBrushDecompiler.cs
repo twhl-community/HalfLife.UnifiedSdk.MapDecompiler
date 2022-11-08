@@ -141,9 +141,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             var model = _bspModels[modelNumber];
 
-            foreach (var face in Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => new { Index = i, Face = _bspFaces[i] }))
+            foreach (var face in Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => _bspFaces[i]))
             {
-                var brush = CreateMapBrush(modelNumber, face.Index, face.Face, origin);
+                var brush = CreateMapBrush(modelNumber, face, origin);
 
                 if (brush is not null)
                 {
@@ -157,7 +157,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             }
         }
 
-        private Solid? CreateMapBrush(int modelNumber, int faceIndex, BspFace face, Vector3 origin)
+        private Solid? CreateMapBrush(int modelNumber, BspFace face, Vector3 origin)
         {
             if (face.NumEdges < 3)
             {
@@ -192,8 +192,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             // Some faces have only collinear points so we can't generate brushes from them.
             if (planeNormal.Length() <= MinimumLength)
             {
-                _logger.Warning("Skipping model {ModelNumber} face {FaceIndex} near {FirstVertex}: face has only collinear points",
-                    modelNumber, faceIndex, firstFrontVertex);
+                _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
+                    modelNumber, firstFrontVertex);
                 return null;
             }
 
