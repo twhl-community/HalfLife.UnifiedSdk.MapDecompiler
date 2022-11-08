@@ -1,19 +1,5 @@
 ﻿namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
-    /*
-     * 
-     typedef struct side_s
-{
-    int				planenum;	// map plane this side is in
-    int				texinfo;		// texture reference
-    winding_t		*winding;	// winding of this side
-    struct side_s	*original;	// bspbrush_t sides will reference the mapbrush_t sides
-   int				lightinfo;	// for SIN only
-    int				contents;	// from miptex
-    int				surf;			// from miptex
-    unsigned short flags;		// side flags
-} side_t;		//sizeof(side_t) = 36
-     */
     internal sealed class BspSide : ICloneable
     {
         public int PlaneNumber;
