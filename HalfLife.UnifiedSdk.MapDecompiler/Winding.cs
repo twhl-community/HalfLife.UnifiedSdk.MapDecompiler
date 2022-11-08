@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
+namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     internal sealed class Winding : ICloneable
     {
@@ -24,6 +24,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         public Winding(int points)
         {
             Points = new(points);
+        }
+
+        public Winding(List<Vector3> points)
+        {
+            Points = points;
         }
 
         public Winding(Winding other)

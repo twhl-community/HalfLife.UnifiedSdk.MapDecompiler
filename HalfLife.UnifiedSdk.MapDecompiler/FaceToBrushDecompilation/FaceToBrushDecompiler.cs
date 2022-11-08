@@ -141,9 +141,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             var model = _bspModels[modelNumber];
 
-            foreach (var face in Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => _bspFaces[i]))
+            foreach (var side in Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => FaceToSide(_bspFaces[i])))
             {
-                var brush = CreateMapBrush(modelNumber, face, origin);
+                var brush = CreateMapBrush(modelNumber, side, origin);
 
                 if (brush is not null)
                 {
@@ -157,9 +157,27 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             }
         }
 
-        private Solid? CreateMapBrush(int modelNumber, BspFace face, Vector3 origin)
+        private BspSide FaceToSide(BspFace face)
         {
-            if (face.NumEdges < 3)
+            List<Vector3> points = new(face.NumEdges);
+
+            for (var i = 0; i < face.NumEdges; ++i)
+            {
+                var edgenum = _bspSurfedges[face.FirstEdge + i];
+                bool side = edgenum > 0;
+
+                //if the face plane is flipped
+                int absEdgeIndex = Math.Abs(edgenum);
+                var edge = _bspEdges[absEdgeIndex];
+                points.Add(_bspVertices[side ? edge.Start : edge.End]);
+            }
+
+            return new(face.Plane, face.TextureInfo, new(points));
+        }
+
+        private Solid? CreateMapBrush(int modelNumber, BspSide side, Vector3 origin)
+        {
+            if (side.Winding.Points.Count < 3)
             {
                 // Should never happen since brushes are triangles at minimum.
                 throw new InvalidOperationException("Face with too few edges");
@@ -171,16 +189,16 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             Solid solid = new();
 
             // Calculate plane normal (BSP planes lack planes with negative normals).
-            var firstFrontVertex = GetEdgeVertices(face.FirstEdge).Start;
-            var secondFrontVertex = GetEdgeVertices(face.FirstEdge + 1).Start;
+            var firstFrontVertex = side.Winding.Points[0];
+            var secondFrontVertex = side.Winding.Points[1];
 
             var thirdFrontVertex = Vector3.Zero;
             var planeNormal = Vector3.Zero;
 
             // Find the first non-collinear point in this face.
-            for (int i = 2; i < face.NumEdges; ++i)
+            for (int i = 2; i < side.Winding.Points.Count; ++i)
             {
-                thirdFrontVertex = GetEdgeVertices(face.FirstEdge + i).Start;
+                thirdFrontVertex = side.Winding.Points[i];
                 planeNormal = Vector3.Cross(Vector3.Normalize(firstFrontVertex - secondFrontVertex), Vector3.Normalize(thirdFrontVertex - secondFrontVertex));
 
                 if (planeNormal.Length() > MinimumLength)
@@ -199,7 +217,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             planeNormal = Vector3.Normalize(planeNormal);
 
-            var textureInfo = _bspTexInfo[face.TextureInfo];
+            var textureInfo = _bspTexInfo[side.TextureInfo];
             var texture = _bspTextures[textureInfo.MipTexture];
 
             var textureProperties = TextureUtils.CalculateTextureProperties(textureInfo.S, textureInfo.T, origin, planeNormal);
@@ -247,10 +265,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             solid.Faces.Add(backFace);
 
             // Generate faces for each edge to connect front and back.
-            foreach (var edgeIndex in Enumerable.Range(face.FirstEdge, face.NumEdges))
+            foreach (var edgeIndex in Enumerable.Range(0, side.Winding.Points.Count))
             {
                 // Note: these vertices are in reversed order compared to the front faces.
-                var (thirdSideVertex, secondSideVertex) = GetEdgeVertices(edgeIndex);
+                var thirdSideVertex = side.Winding.Points[edgeIndex];
+                var secondSideVertex = side.Winding.Points[(edgeIndex + 1) % side.Winding.Points.Count];
 
                 var firstSideVertex = secondSideVertex + normal;
 
@@ -289,20 +308,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             }
 
             return solid;
-        }
-
-        (Vector3 Start, Vector3 End) GetEdgeVertices(int edgeIndex)
-        {
-            var edgenum = _bspSurfedges[edgeIndex];
-            bool side = edgenum > 0;
-
-            //if the face plane is flipped
-            int absEdgeIndex = Math.Abs(edgenum);
-            var edge = _bspEdges[absEdgeIndex];
-            var v1 = _bspVertices[side ? edge.Start : edge.End];
-            var v2 = _bspVertices[side ? edge.End : edge.Start];
-
-            return (v1, v2);
         }
 
         // Vertices for a face facing down the X axis, without size applied.
