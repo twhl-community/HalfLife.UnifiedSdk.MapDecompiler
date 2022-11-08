@@ -240,7 +240,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             }
 
             var v = Vector3.Dot(vup, normal);
-            vup = Vector3.Normalize(vup + -v * normal);
+            vup = Vector3.Normalize(vup + (-v * normal));
 
             var org = normal * dist;
 
@@ -398,7 +398,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             {
                 1 => dist,
                 -1 => -dist,
-                _ => p1 + dot * (p2 - p1)
+                _ => p1 + (dot * (p2 - p1))
             };
         }
 
