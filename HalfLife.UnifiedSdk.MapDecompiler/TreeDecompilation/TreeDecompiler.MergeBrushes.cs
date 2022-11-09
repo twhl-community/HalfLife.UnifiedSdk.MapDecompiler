@@ -12,6 +12,8 @@
 
             do
             {
+                _cancellationToken.ThrowIfCancellationRequested();
+
                 merged = 0;
                 newbrushlist.Clear();
 

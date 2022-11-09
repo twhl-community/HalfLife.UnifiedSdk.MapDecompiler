@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using System.Threading;
 using BspFace = Sledge.Formats.Bsp.Objects.Face;
 using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 using BspVersion = Sledge.Formats.Bsp.Version;
@@ -25,6 +26,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
         private readonly DecompilerOptions _options;
+        private readonly CancellationToken _cancellationToken;
 
         private readonly List<BspPlane> _bspPlanes;
         private readonly Faces _bspFaces;
@@ -51,11 +53,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private readonly int _originTextureIndex;
 
-        private TreeDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options)
+        private TreeDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
             _logger = logger;
             _bspFile = bspFile;
             _options = options;
+            _cancellationToken = cancellationToken;
 
             // Cache lumps to avoid lookup overhead.
             //_bspPlanes = _bspFile.Planes;
@@ -192,14 +195,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 throw new ArgumentException("BSP has no entities", nameof(bspFile));
             }
 
-            var decompiler = new TreeDecompiler(logger, bspFile, options);
+            var decompiler = new TreeDecompiler(logger, bspFile, options, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            return decompiler.DecompileCore(cancellationToken);
+            return decompiler.DecompileCore();
         }
 
-        private MapFile DecompileCore(CancellationToken cancellationToken)
+        private MapFile DecompileCore()
         {
             Debug.Assert(_bspEntities[0].ClassName == "worldspawn");
 
@@ -253,7 +256,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             entities.AddRange(mapFile.Worldspawn.Children.Cast<MapEntity>().Select((e, i) => new DecompiledEntity(i + 1, e)));
 
-            cancellationToken.ThrowIfCancellationRequested();
+            _cancellationToken.ThrowIfCancellationRequested();
 
             foreach (var entity in entities)
             {
@@ -274,7 +277,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                 CreateMapBrushes(entity, modelNumber);
 
-                cancellationToken.ThrowIfCancellationRequested();
+                _cancellationToken.ThrowIfCancellationRequested();
             }
 
             _logger.Information("{Count} map brushes", _numMapBrushes);
@@ -287,8 +290,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         {
             //create brushes from the model BSP tree
             List<BspBrush> brushlist = CreateBrushesFromBSP(modelNumber);
+
             //texture the brushes and split them when necesary
             brushlist = TextureBrushes(brushlist, modelNumber);
+
             //fix the contents textures of all brushes
             FixContentsTextures(brushlist);
 
@@ -296,6 +301,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 brushlist = MergeBrushes(brushlist, modelNumber);
             }
+
+            _cancellationToken.ThrowIfCancellationRequested();
 
             if (modelNumber == 0)
             {
@@ -323,6 +330,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             foreach (var brush in brushlist)
             {
                 BSPBrushToMapBrush(brush, entity, origin);
+                _cancellationToken.ThrowIfCancellationRequested();
             }
 
             if (brushlist.Count > 0 && origin != Vector3.Zero)
@@ -889,6 +897,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             //go over the brush list
             for (int brushIndex = 0; brushIndex < brushlist.Count;)
             {
+                _cancellationToken.ThrowIfCancellationRequested();
+
                 var brush = brushlist[brushIndex];
 
                 //find a texinfo for every brush side
