@@ -372,34 +372,38 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             Solid solid = new();
 
-            // Calculate plane normal (BSP planes lack planes with negative normals).
             var firstFrontVertex = side.Winding.Points[0];
             var secondFrontVertex = side.Winding.Points[1];
-
             var thirdFrontVertex = Vector3.Zero;
-            var planeNormal = Vector3.Zero;
+
+            var planeNormal = _bspPlanes[side.PlaneNumber].Normal;
+
+            if (side.Side != 0)
+            {
+                planeNormal = -planeNormal;
+            }
+
+            var pointNormal = Vector3.Zero;
 
             // Find the first non-collinear point in this face.
             for (int i = 2; i < side.Winding.Points.Count; ++i)
             {
                 thirdFrontVertex = side.Winding.Points[i];
-                planeNormal = Vector3.Cross(Vector3.Normalize(firstFrontVertex - secondFrontVertex), Vector3.Normalize(thirdFrontVertex - secondFrontVertex));
+                pointNormal = Vector3.Cross(Vector3.Normalize(firstFrontVertex - secondFrontVertex), Vector3.Normalize(thirdFrontVertex - secondFrontVertex));
 
-                if (planeNormal.Length() > MinimumLength)
+                if (pointNormal.Length() > MinimumLength)
                 {
                     break;
                 }
             }
 
             // Some faces have only collinear points so we can't generate brushes from them.
-            if (planeNormal.Length() <= MinimumLength)
+            if (pointNormal.Length() <= MinimumLength)
             {
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
                     modelNumber, firstFrontVertex);
                 return null;
             }
-
-            planeNormal = Vector3.Normalize(planeNormal);
 
             var textureInfo = _bspTexInfo[side.TextureInfo];
             var texture = _bspTextures[textureInfo.MipTexture];
