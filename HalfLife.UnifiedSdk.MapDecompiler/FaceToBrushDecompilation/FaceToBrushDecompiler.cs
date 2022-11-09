@@ -383,26 +383,35 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 planeNormal = -planeNormal;
             }
 
-            var pointNormal = Vector3.Zero;
-
-            // Find the first non-collinear point in this face.
-            for (int i = 2; i < side.Winding.Points.Count; ++i)
             {
-                thirdFrontVertex = side.Winding.Points[i];
-                pointNormal = Vector3.Cross(Vector3.Normalize(firstFrontVertex - secondFrontVertex), Vector3.Normalize(thirdFrontVertex - secondFrontVertex));
+                Span<float> lengths = stackalloc float[3];
 
-                if (pointNormal.Length() > MinimumLength)
+                int i;
+
+                // Find the first non-collinear point in this face.
+                for (i = 2; i < side.Winding.Points.Count; ++i)
                 {
-                    break;
-                }
-            }
+                    thirdFrontVertex = side.Winding.Points[i];
 
-            // Some faces have only collinear points so we can't generate brushes from them.
-            if (pointNormal.Length() <= MinimumLength)
-            {
-                _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
+                    lengths[0] = (firstFrontVertex - secondFrontVertex).Length();
+                    lengths[1] = (thirdFrontVertex - secondFrontVertex).Length();
+                    lengths[2] = (firstFrontVertex - thirdFrontVertex).Length();
+
+                    lengths.Sort();
+
+                    if (MathF.Abs(lengths[2] - (lengths[0] + lengths[1])) > MathConstants.ContinuousEpsilon)
+                    {
+                        break;
+                    }
+                }
+
+                // Some faces have only collinear points so we can't generate brushes from them.
+                if (i >= side.Winding.Points.Count)
+                {
+                    _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
                     modelNumber, firstFrontVertex);
-                return null;
+                    return null;
+                }
             }
 
             var textureInfo = _bspTexInfo[side.TextureInfo];
