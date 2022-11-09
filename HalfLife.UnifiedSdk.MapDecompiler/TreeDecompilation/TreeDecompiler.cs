@@ -19,9 +19,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private const int PlaneHashes = 1024;
         private const int MaxRange = 4096;
         private const int MaxMapBounds = 65535;
-        private const int MaxMapFileBrushes = 65535;
-        private const int MaxMapFileBrushSides = MaxMapFileBrushes * 8;
-        private const int MaxMapBrushSides = 65536;
 
         private const int TexInfoNode = -1; //side is allready on a node
 

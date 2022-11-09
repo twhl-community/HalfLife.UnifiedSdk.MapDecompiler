@@ -10,9 +10,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
     {
         private void BSPBrushToMapBrush(BspBrush brush, DecompiledEntity entity, Vector3 origin)
         {
-            if (_numMapBrushes >= MaxMapFileBrushes)
-                throw new InvalidOperationException("nummapbrushes == MaxMapFileBrushes");
-
             var besttexinfo = TexInfoNode;
 
             foreach (var side in brush.Sides)
@@ -176,8 +173,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                     if (i == b.Brush.Sides.Count)
                     {   // add a new side
-                        if (_numMapBrushSides == MaxMapBrushSides)
-                            throw new InvalidOperationException("MaxMapBrushSides");
                         ++_numMapBrushSides;
                         var normal = Vector3.Zero;
                         Vector3Utils.SetByIndex(ref normal, axis, dir);
@@ -300,8 +295,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                             // add this plane
 
-                            if (_numMapBrushSides == MaxMapBrushSides)
-                                throw new InvalidOperationException("MaxMapBrushSides");
                             ++_numMapBrushSides;
 
                             var firstSide = b.Brush.Sides[0];
