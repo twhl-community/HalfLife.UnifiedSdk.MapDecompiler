@@ -1,30 +1,29 @@
 using Avalonia.Controls;
+using HalfLife.UnifiedSdk.MapDecompiler.GUI.Behaviors;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 {
     public partial class DecompilerOutputView : UserControl
     {
-        private bool _programAutoScroll = true;
-        private bool _jobAutoScroll = true;
-
         public DecompilerOutputView()
         {
             InitializeComponent();
+            AddHandler(ScrollViewer.ScrollChangedEvent, ProgramScrollViewer_ScrollChanged);
         }
 
-        private void ProgramScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        private void ProgramScrollViewer_ScrollChanged(object? sender, ScrollChangedEventArgs e)
         {
-            ScrollViewerScrollChanged(ProgramScrollViewer, e, ref _programAutoScroll);
-        }
-
-        private void JobScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            ScrollViewerScrollChanged(JobScrollViewer, e, ref _jobAutoScroll);
+            if (e.Source is ScrollViewer sv)
+            {
+                ScrollViewerScrollChanged(sv, e);
+            }
         }
 
         // Based on https://stackoverflow.com/a/19315242/1306648
-        private static void ScrollViewerScrollChanged(ScrollViewer sv, ScrollChangedEventArgs e, ref bool autoScroll)
+        private static void ScrollViewerScrollChanged(ScrollViewer sv, ScrollChangedEventArgs e)
         {
+            var autoScroll = sv.GetValue(ScrollViewerBehaviors.AutoScrollProperty);
+
             // User scroll event : set or unset auto-scroll mode
             if (e.ExtentDelta.Length == 0)
             {   // Content unchanged : user scroll event
@@ -46,6 +45,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
                 // Autoscroll
                 sv.ScrollToEnd();
             }
+
+            sv.SetValue(ScrollViewerBehaviors.AutoScrollProperty, autoScroll);
         }
     }
 }
