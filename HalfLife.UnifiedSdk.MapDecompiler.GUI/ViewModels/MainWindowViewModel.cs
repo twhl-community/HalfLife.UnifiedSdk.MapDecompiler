@@ -263,7 +263,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     }
                 }
 
-                this.RaisePropertyChanged(nameof(CanDecompileAgain));
+                Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(CanDecompileAgain)));
             }
             finally
             {
