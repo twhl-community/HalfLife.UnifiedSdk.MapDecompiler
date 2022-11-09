@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace HalfLife.UnifiedSdk.MapDecompiler
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     internal sealed class Winding : ICloneable
     {
@@ -12,8 +10,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
         private const int BogusMapRange = BogusRange + 128;
 
         private const int MaxPointsOnWinding = 96;
-        private const float ConvexEpsilon = 0.2f;
-        private const float EdgeLength = 0.2f;
+        private const double ConvexEpsilon = 0.2;
+        private const double EdgeLength = 0.2;
 
         private const int SideFront = 0;
         private const int SideBack = 1;
@@ -41,18 +39,18 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return new Winding(this);
         }
 
-        public float Area()
+        public double Area()
         {
-            float total = 0;
+            double total = 0;
 
             for (int i = 2; i < Points.Count; ++i)
             {
                 var d1 = Points[i - 1] - Points[0];
                 var d2 = Points[i] - Points[0];
 
-                var cross = Vector3.Cross(d1, d2);
+                var cross = Vector3D.Cross(d1, d2);
 
-                total += 0.5f * cross.Length();
+                total += 0.5 * cross.Length;
             }
 
             return total;
@@ -69,7 +67,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             {
                 int j = i == Points.Count - 1 ? 0 : i + 1;
                 var delta = Points[j] - Points[i];
-                float len = delta.Length();
+                var len = delta.Length;
 
                 if (len > EdgeLength && ++edges == 3)
                 {
@@ -98,9 +96,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return false;
         }
 
-        public void ClipEpsilon(Vector3 normal, float dist, float epsilon, out Winding? front, out Winding? back)
+        public void ClipEpsilon(Vector3 normal, double dist, double epsilon, out Winding? front, out Winding? back)
         {
-            Span<float> dists = stackalloc float[MaxPointsOnWinding + 4];
+            Span<double> dists = stackalloc double[MaxPointsOnWinding + 4];
             Span<int> sides = stackalloc int[MaxPointsOnWinding + 4];
             Span<int> counts = stackalloc int[3];
 
@@ -109,7 +107,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             // determine sides for each point
             for (i = 0; i < Points.Count; ++i)
             {
-                var dot = Vector3.Dot(Points[i], normal);
+                var dot = Vector3D.Dot(Points[i], normal);
                 dot -= dist;
                 dists[i] = dot;
 
@@ -203,13 +201,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             }
         }
 
-        public static Winding BaseWindingForPlane(Vector3 normal, float dist)
+        public static Winding BaseWindingForPlane(Vector3 normal, double dist)
         {
             // find the major axis
             int x = -1;
-            float max = -BogusRange;
+            double max = -BogusRange;
 
-            static void DetermineAxis(ref int axisIndex, ref float axisMax, float normal, int index)
+            static void DetermineAxis(ref int axisIndex, ref double axisMax, double normal, int index)
             {
                 var v = Math.Abs(normal);
                 if (v > axisMax)
@@ -239,12 +237,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 vup.Z = 1;
             }
 
-            var v = Vector3.Dot(vup, normal);
-            vup = Vector3.Normalize(vup + (-v * normal));
+            var v = Vector3D.Dot(vup, normal);
+            vup = Vector3D.Normalize(vup + (-v * normal));
 
             var org = normal * dist;
 
-            var vright = Vector3.Cross(vup, normal);
+            var vright = Vector3D.Cross(vup, normal);
 
             vup *= BogusRange;
             vright *= BogusRange;
@@ -267,9 +265,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return w;
         }
 
-        public Winding? ChopWindingInPlace(Vector3 normal, float dist, float epsilon)
+        public Winding? ChopWindingInPlace(Vector3 normal, double dist, double epsilon)
         {
-            Span<float> dists = stackalloc float[MaxPointsOnWinding + 4];
+            Span<double> dists = stackalloc double[MaxPointsOnWinding + 4];
             Span<int> sides = stackalloc int[MaxPointsOnWinding + 4];
             Span<int> counts = stackalloc int[3];
 
@@ -278,7 +276,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             // determine sides for each point
             for (i = 0; i < Points.Count; ++i)
             {
-                float dot = Vector3.Dot(Points[i], normal);
+                var dot = Vector3D.Dot(Points[i], normal);
                 dot -= dist;
                 dists[i] = dot;
 
@@ -365,7 +363,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
         {
             var result = winding.Clone();
 
-            Span<float> lengths = stackalloc float[3];
+            Span<double> lengths = stackalloc double[3];
 
             bool removed;
 
@@ -380,13 +378,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                     var secondVertex = result.Points[i - 1];
                     var thirdVertex = result.Points[i];
 
-                    lengths[0] = (firstVertex - secondVertex).Length();
-                    lengths[1] = (thirdVertex - secondVertex).Length();
-                    lengths[2] = (firstVertex - thirdVertex).Length();
+                    lengths[0] = (firstVertex - secondVertex).Length;
+                    lengths[1] = (thirdVertex - secondVertex).Length;
+                    lengths[2] = (firstVertex - thirdVertex).Length;
 
                     lengths.Sort();
 
-                    if (MathF.Abs(lengths[2] - (lengths[0] + lengths[1])) <= MathConstants.ContinuousEpsilon)
+                    if (Math.Abs(lengths[2] - (lengths[0] + lengths[1])) <= MathConstants.ContinuousEpsilon)
                     {
                         // Remove middle point.
                         result.Points.RemoveAt(i - 1);
@@ -405,7 +403,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
         public static bool AreNonConvex(Winding? w1, Winding? w2,
                              Vector3 normal1, Vector3 normal2,
-                             float dist1, float dist2)
+                             double dist1, double dist2)
         {
             if (w1 is null || w2 is null)
             {
@@ -415,7 +413,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             //check if one of the points of face1 is at the back of the plane of face2
             for (int i = 0; i < w1.Points.Count; ++i)
             {
-                if (Vector3.Dot(normal2, w1.Points[i]) - dist2 > ConvexEpsilon)
+                if (Vector3D.Dot(normal2, w1.Points[i]) - dist2 > ConvexEpsilon)
                 {
                     return true;
                 }
@@ -424,7 +422,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             //check if one of the points of face2 is at the back of the plane of face1
             for (int i = 0; i < w2.Points.Count; ++i)
             {
-                if (Vector3.Dot(normal1, w2.Points[i]) - dist1 > ConvexEpsilon)
+                if (Vector3D.Dot(normal1, w2.Points[i]) - dist1 > ConvexEpsilon)
                 {
                     return true;
                 }
@@ -433,7 +431,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return false;
         }
 
-        private static float GetMid(float dist, float dot, float normal, float p1, float p2)
+        private static double GetMid(double dist, double dot, double normal, double p1, double p2)
         {
             // avoid round off error when possible
             return normal switch

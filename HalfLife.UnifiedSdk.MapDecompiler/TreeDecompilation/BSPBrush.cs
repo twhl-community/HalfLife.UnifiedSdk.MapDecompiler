@@ -1,5 +1,4 @@
 ﻿using Sledge.Formats.Bsp.Objects;
-using System.Numerics;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {

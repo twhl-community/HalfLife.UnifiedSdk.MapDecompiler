@@ -1,6 +1,8 @@
-﻿using System.Numerics;
-
-namespace HalfLife.UnifiedSdk.MapDecompiler
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler
 {
-    internal record struct TextureProperties(float XScale, float YScale, float XShift, float YShift, float Rotation, Vector3 UAxis, Vector3 VAxis);
+    internal record struct TextureProperties(
+        float XScale, float YScale,
+        float XShift, float YShift,
+        float Rotation,
+        System.Numerics.Vector3 UAxis, System.Numerics.Vector3 VAxis);
 }

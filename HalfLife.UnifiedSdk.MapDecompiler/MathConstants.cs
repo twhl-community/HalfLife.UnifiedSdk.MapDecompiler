@@ -2,8 +2,8 @@
 {
     internal static class MathConstants
     {
-        public const float EqualEpsilon = 0.001f;
-        public const float OnEpsilon = 0.01f;
-        public const float ContinuousEpsilon = OnEpsilon;
+        public const double EqualEpsilon = 0.001;
+        public const double OnEpsilon = 0.01;
+        public const double ContinuousEpsilon = OnEpsilon;
     }
 }

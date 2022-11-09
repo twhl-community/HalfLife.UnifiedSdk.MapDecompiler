@@ -2,7 +2,6 @@
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Bsp.Lumps;
 using Sledge.Formats.Map.Objects;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using BspFace = Sledge.Formats.Bsp.Objects.Face;
 using BspVersion = Sledge.Formats.Bsp.Version;
@@ -19,13 +18,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
 
-        private readonly Planes _bspPlanes;
+        private readonly List<BspPlane> _bspPlanes;
         private readonly Faces _bspFaces;
         private readonly Texinfo _bspTexInfo;
         private readonly Textures _bspTextures;
         private readonly Surfedges _bspSurfedges;
         private readonly Edges _bspEdges;
-        private readonly Vertices _bspVertices;
+        private readonly List<Vector3> _bspVertices;
         private readonly Entities _bspEntities;
         private readonly Models _bspModels;
 
@@ -35,13 +34,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             _bspFile = bspFile;
 
             // Cache lumps to avoid lookup overhead.
-            _bspPlanes = _bspFile.Planes;
+            _bspPlanes = _bspFile.Planes.Select(p => new BspPlane(p)).ToList();
             _bspFaces = _bspFile.Faces;
             _bspTexInfo = _bspFile.Texinfo;
             _bspTextures = _bspFile.Textures;
             _bspSurfedges = _bspFile.Surfedges;
             _bspEdges = _bspFile.Edges;
-            _bspVertices = _bspFile.Vertices;
+            _bspVertices = _bspFile.Vertices.Select(v => v.ToDouble()).ToList();
             _bspEntities = _bspFile.Entities;
             _bspModels = _bspFile.Models;
         }
@@ -129,11 +128,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             {
                 var components = Regex.Split(value, @"\s+");
 
-                Span<float> componentValues = stackalloc float[3];
+                // TODO: refactor
+                Span<double> componentValues = stackalloc double[3];
 
                 for (int i = 0; i < 3 && i < components.Length; ++i)
                 {
-                    _ = float.TryParse(components[i], out componentValues[i]);
+                    _ = double.TryParse(components[i], out componentValues[i]);
                 }
 
                 origin.X = componentValues[0];
@@ -283,9 +283,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                     int k;
                     for (k = 0; k < 3; ++k)
                     {
-                        if (MathF.Abs(Vector3Utils.GetByIndex(ref p1, k) - Vector3Utils.GetByIndex(ref p4, k)) > MathConstants.EqualEpsilon)
+                        if (Math.Abs(Vector3Utils.GetByIndex(ref p1, k) - Vector3Utils.GetByIndex(ref p4, k)) > MathConstants.EqualEpsilon)
                             break;
-                        if (MathF.Abs(Vector3Utils.GetByIndex(ref p2, k) - Vector3Utils.GetByIndex(ref p3, k)) > MathConstants.EqualEpsilon)
+                        if (Math.Abs(Vector3Utils.GetByIndex(ref p2, k) - Vector3Utils.GetByIndex(ref p3, k)) > MathConstants.EqualEpsilon)
                             break;
                     }
 
@@ -311,10 +311,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 planenormal = -planenormal;
 
             var back = f1.Winding.Points[(i + f1.Winding.Points.Count - 1) % f1.Winding.Points.Count];
-            var normal = Vector3.Normalize(Vector3.Cross(planenormal, p1 - back));
+            var normal = Vector3D.Normalize(Vector3D.Cross(planenormal, p1 - back));
 
             back = f2.Winding.Points[(j + 2) % f2.Winding.Points.Count];
-            var dot = Vector3.Dot(back - p1, normal);
+            var dot = Vector3D.Dot(back - p1, normal);
 
             if (dot > MathConstants.ContinuousEpsilon)
                 return null;            // not a convex polygon
@@ -322,10 +322,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             var keep1 = dot < -MathConstants.ContinuousEpsilon;
 
             back = f1.Winding.Points[(i + 2) % f1.Winding.Points.Count];
-            normal = Vector3.Normalize(Vector3.Cross(planenormal, back - p2));
+            normal = Vector3D.Normalize(Vector3D.Cross(planenormal, back - p2));
 
             back = f2.Winding.Points[(j + f2.Winding.Points.Count - 1) % f2.Winding.Points.Count];
-            dot = Vector3.Dot(back - p2, normal);
+            dot = Vector3D.Dot(back - p2, normal);
 
             if (dot > MathConstants.ContinuousEpsilon)
                 return null;            // not a convex polygon
@@ -376,7 +376,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 return null;
             }
 
-            const float BrushThickness = 1.0f;
+            const double BrushThickness = 1.0;
 
             var firstFrontVertex = winding.Points[0];
             var secondFrontVertex = winding.Points[1];
@@ -408,7 +408,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             var textureInfo = _bspTexInfo[side.TextureInfo];
             var texture = _bspTextures[textureInfo.MipTexture];
 
-            var textureProperties = TextureUtils.CalculateTextureProperties(textureInfo.S, textureInfo.T, origin, planeNormal);
+            var textureProperties = TextureUtils.CalculateTextureProperties(textureInfo.S.ToDouble(), textureInfo.T.ToDouble(), origin, planeNormal);
 
             MapFace frontFace = new()
             {
@@ -423,9 +423,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 VAxis = textureProperties.VAxis
             };
 
-            frontFace.Vertices.Add(firstFrontVertex);
-            frontFace.Vertices.Add(secondFrontVertex);
-            frontFace.Vertices.Add(thirdFrontVertex);
+            frontFace.Vertices.Add(firstFrontVertex.ToSingle());
+            frontFace.Vertices.Add(secondFrontVertex.ToSingle());
+            frontFace.Vertices.Add(thirdFrontVertex.ToSingle());
 
             // Create back face from front face.
             MapFace backFace = new()
@@ -446,7 +446,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             // Add front face vertices in reverse order to flip direction and offset to create thicker brush.
             foreach (var vertex in ((IEnumerable<Vector3>)frontFace.Vertices).Reverse())
             {
-                backFace.Vertices.Add(vertex + normal);
+                backFace.Vertices.Add((vertex + normal).ToSingle());
             }
 
             solid.Faces.Add(frontFace);
@@ -461,7 +461,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
                 var firstSideVertex = secondSideVertex + normal;
 
-                var sidePlaneNormal = Vector3.Cross(Vector3.Normalize(firstSideVertex - secondSideVertex), Vector3.Normalize(thirdSideVertex - secondSideVertex));
+                var sidePlaneNormal = Vector3D.Cross(Vector3D.Normalize(firstSideVertex - secondSideVertex), Vector3D.Normalize(thirdSideVertex - secondSideVertex));
 
                 // Align side to face.
                 TextureUtils.TextureUVAxesFromNormal(sidePlaneNormal, out var uAxis, out var vAxis);
@@ -476,22 +476,25 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                     XShift = 0,
                     YShift = 0,
                     Rotation = 0,
-                    UAxis = uAxis,
-                    VAxis = vAxis
+                    UAxis = uAxis.ToSingle(),
+                    VAxis = vAxis.ToSingle()
                 };
 
-                sideFace.Vertices.Add(firstSideVertex);
-                sideFace.Vertices.Add(secondSideVertex);
-                sideFace.Vertices.Add(thirdSideVertex);
+                sideFace.Vertices.Add(firstSideVertex.ToSingle());
+                sideFace.Vertices.Add(secondSideVertex.ToSingle());
+                sideFace.Vertices.Add(thirdSideVertex.ToSingle());
 
                 solid.Faces.Add(sideFace);
             }
+
+            var singleOrigin = origin.ToSingle();
 
             foreach (var mapFace in solid.Faces)
             {
                 for (int i = 0; i < mapFace.Vertices.Count; ++i)
                 {
-                    mapFace.Vertices[i] += origin;
+                    // TODO: do this earlier so precision is better
+                    mapFace.Vertices[i] += singleOrigin;
                 }
             }
 
@@ -506,22 +509,22 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             new Vector3(1, -1, -1)
         };
 
-        private const float RotationAmount = MathF.PI / 2;
+        private const double RotationAmount = Math.PI / 2;
 
         private static readonly ReadOnlyMemory<Matrix4x4> Rotations = new[]
         {
             Matrix4x4.Identity,
-            Matrix4x4.CreateRotationZ(RotationAmount),
-            Matrix4x4.CreateRotationY(RotationAmount),
-            Matrix4x4.CreateRotationZ(RotationAmount * 2),
-            Matrix4x4.CreateRotationZ(RotationAmount * 3),
-            Matrix4x4.CreateRotationY(RotationAmount * 3)
+            Matrix4x4D.CreateRotationZ(RotationAmount),
+            Matrix4x4D.CreateRotationY(RotationAmount),
+            Matrix4x4D.CreateRotationZ(RotationAmount * 2),
+            Matrix4x4D.CreateRotationZ(RotationAmount * 3),
+            Matrix4x4D.CreateRotationY(RotationAmount * 3)
         };
 
         private static Solid CreateOriginBrush(Vector3 origin)
         {
             //TODO: merge with constant in Tree decompiler.
-            const float originBrushSize = 16;
+            const double originBrushSize = 16;
 
             Solid solid = new();
 
@@ -542,8 +545,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                     TextureName = "ORIGIN",
                     XScale = 1,
                     YScale = 1,
-                    UAxis = uAxis,
-                    VAxis = vAxis
+                    UAxis = uAxis.ToSingle(),
+                    VAxis = vAxis.ToSingle()
                 };
 
                 ref readonly var rotation = ref rotations[i];
@@ -553,9 +556,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 {
                     var vertex = sourceVertex * originBrushSize;
 
-                    vertex = Vector3.Transform(vertex, rotation);
+                    vertex = Vector3D.Transform(vertex, rotation);
 
-                    face.Vertices.Add(vertex + origin);
+                    face.Vertices.Add((vertex + origin).ToSingle());
                 }
 
                 solid.Faces.Add(face);

@@ -1,13 +1,11 @@
 ﻿using Sledge.Formats.Bsp.Objects;
-using System.Numerics;
-using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     internal static class MathUtils
     {
-        public const float NormalEpsilon = 0.0001f;
-        public const float DistEpsilon = 0.02f;
+        public const double NormalEpsilon = 0.0001;
+        public const double DistEpsilon = 0.02;
 
         public static void ClearBounds(ref Vector3 mins, ref Vector3 maxs)
         {
@@ -18,27 +16,27 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         public static void AddPointToBounds(Vector3 v, ref Vector3 mins, ref Vector3 maxs)
         {
-            mins = Vector3.Min(v, mins);
-            maxs = Vector3.Max(v, maxs);
+            mins = Vector3D.Min(v, mins);
+            maxs = Vector3D.Max(v, maxs);
         }
 
-        public static float RoundInt(float input)
+        public static double RoundInt(double input)
         {
-            return MathF.Floor(input + 0.5f);
+            return Math.Floor(input + 0.5);
         }
 
         public static void SnapVector(ref Vector3 normal)
         {
-            static bool Snap(ref Vector3 normal, ref float normalValue)
+            static bool Snap(ref Vector3 normal, ref double normalValue)
             {
-                if (MathF.Abs(normalValue - 1) < NormalEpsilon)
+                if (Math.Abs(normalValue - 1) < NormalEpsilon)
                 {
                     normal = Vector3.Zero;
                     normalValue = 1;
                     return true;
                 }
 
-                if (MathF.Abs(normalValue - -1) < NormalEpsilon)
+                if (Math.Abs(normalValue - -1) < NormalEpsilon)
                 {
                     normal = Vector3.Zero;
                     normalValue = -1;
@@ -61,24 +59,24 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             Snap(ref normal, ref normal.Z);
         }
 
-        public static void SnapPlane(Vector3 normal, ref float dist)
+        public static void SnapPlane(Vector3 normal, ref double dist)
         {
             SnapVector(ref normal);
 
-            if (MathF.Abs(dist - RoundInt(dist)) < DistEpsilon)
+            if (Math.Abs(dist - RoundInt(dist)) < DistEpsilon)
             {
                 dist = RoundInt(dist);
             }
         }
 
-        public static bool PlaneEqual(BspPlane p, Vector3 normal, float dist)
+        public static bool PlaneEqual(BspPlane p, Vector3 normal, double dist)
         {
             var diff = p.Normal - normal;
 
-            return MathF.Abs(diff.X) < NormalEpsilon
-                && MathF.Abs(diff.Y) < NormalEpsilon
-                && MathF.Abs(diff.Z) < NormalEpsilon
-                && MathF.Abs(p.Distance - dist) < DistEpsilon;
+            return Math.Abs(diff.X) < NormalEpsilon
+                && Math.Abs(diff.Y) < NormalEpsilon
+                && Math.Abs(diff.Z) < NormalEpsilon
+                && Math.Abs(p.Distance - dist) < DistEpsilon;
         }
 
         public static PlaneType PlaneTypeForNormal(Vector3 normal)
@@ -91,9 +89,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             if (normal.Z == 1.0 || normal.Z == -1.0)
                 return PlaneType.Z;
 
-            var ax = MathF.Abs(normal.X);
-            var ay = MathF.Abs(normal.Y);
-            var az = MathF.Abs(normal.Z);
+            var ax = Math.Abs(normal.X);
+            var ay = Math.Abs(normal.Y);
+            var az = Math.Abs(normal.Z);
 
             if (ax >= ay && ax >= az)
                 return PlaneType.AnyX;
@@ -104,7 +102,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         public static PlaneSide BrushMostlyOnSide(BspBrush brush, BspPlane plane)
         {
-            float max = 0;
+            double max = 0;
             var planeSide = PlaneSide.Front;
 
             foreach (var side in brush.Sides)
@@ -118,7 +116,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                 foreach (var point in w.Points)
                 {
-                    var d = Vector3.Dot(point, plane.Normal) - plane.Distance;
+                    var d = Vector3D.Dot(point, plane.Normal) - plane.Distance;
 
                     if (d > max)
                     {

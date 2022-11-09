@@ -250,7 +250,7 @@
             MathUtils.BoundBrush(brush);
 
             //check for out of bound brushes
-            bool CheckBounds(int i, float min, float max)
+            bool CheckBounds(int i, double min, double max)
             {
                 if (min < -MaxMapBounds || max > MaxMapBounds)
                 {

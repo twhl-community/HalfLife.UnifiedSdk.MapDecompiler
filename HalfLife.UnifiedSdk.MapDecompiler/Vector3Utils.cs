@@ -1,10 +1,18 @@
-﻿using System.Numerics;
-
-namespace HalfLife.UnifiedSdk.MapDecompiler
+﻿namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     internal static class Vector3Utils
     {
-        public static float GetByIndex(ref Vector3 vector, int index)
+        public static Vector3 ToDouble(this System.Numerics.Vector3 self)
+        {
+            return new(self.X, self.Y, self.Z);
+        }
+
+        public static System.Numerics.Vector3 ToSingle(this Vector3 self)
+        {
+            return new((float)self.X, (float)self.Y, (float)self.Z);
+        }
+
+        public static double GetByIndex(ref Vector3 vector, int index)
         {
             return index switch
             {
@@ -15,12 +23,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             };
         }
 
-        public static float GetByIndex(Vector3 vector, int index)
+        public static double GetByIndex(Vector3 vector, int index)
         {
             return GetByIndex(ref vector, index);
         }
 
-        public static void SetByIndex(ref Vector3 vector, int index, float value)
+        public static void SetByIndex(ref Vector3 vector, int index, double value)
         {
             switch (index)
             {

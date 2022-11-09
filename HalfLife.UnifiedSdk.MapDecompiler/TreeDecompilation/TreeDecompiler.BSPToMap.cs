@@ -1,7 +1,6 @@
 ﻿using Sledge.Formats.Bsp.Objects;
 using Sledge.Formats.Id;
 using Sledge.Formats.Map.Objects;
-using System.Numerics;
 using MapFace = Sledge.Formats.Map.Objects.Face;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
@@ -120,7 +119,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 }
             }
 
-            bool CheckBounds(float min, float max)
+            bool CheckBounds(double min, double max)
             {
                 if (min < -MaxMapBounds || max > MaxMapBounds)
                 {
@@ -177,7 +176,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                         var normal = Vector3.Zero;
                         Vector3Utils.SetByIndex(ref normal, axis, dir);
 
-                        float dist = dir == 1 ? Vector3Utils.GetByIndex(ref b.Maxs, axis) : -Vector3Utils.GetByIndex(ref b.Mins, axis);
+                        var dist = dir == 1 ? Vector3Utils.GetByIndex(ref b.Maxs, axis) : -Vector3Utils.GetByIndex(ref b.Mins, axis);
 
                         var firstSide = b.Brush.Sides[0];
 
@@ -223,12 +222,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                     var vec = w.Points[j] - w.Points[k];
 
-                    if (vec.Length() < 0.5f)
+                    if (vec.Length < 0.5)
                     {
                         continue;
                     }
 
-                    vec = Vector3.Normalize(vec);
+                    vec = Vector3D.Normalize(vec);
 
                     MathUtils.SnapVector(ref vec);
 
@@ -256,14 +255,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                             // construct a plane
                             var vec2 = Vector3.Zero;
                             Vector3Utils.SetByIndex(ref vec2, axis, dir);
-                            var normal = Vector3.Cross(vec, vec2);
+                            var normal = Vector3D.Cross(vec, vec2);
 
-                            if (normal.Length() < 0.5f)
+                            if (normal.Length < 0.5)
                                 continue;
 
-                            normal = Vector3.Normalize(normal);
+                            normal = Vector3D.Normalize(normal);
 
-                            float dist = Vector3.Dot(w.Points[j], normal);
+                            var dist = Vector3D.Dot(w.Points[j], normal);
 
                             // if all the points on all the sides are
                             // behind this plane, it is a proper edge bevel
@@ -282,7 +281,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                                 return w2.Points.FindIndex(p =>
                                 {
-                                    var d = Vector3.Dot(p, normal) - dist;
+                                    var d = Vector3D.Dot(p, normal) - dist;
                                     if (d > 0.1)
                                         return true;  // point in front
 
@@ -340,17 +339,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 var textureInfo = side.TextureInfo != TexInfoNode ? _bspTexInfo[side.TextureInfo] : ClipTextureInfo;
                 var texture = textureInfo.MipTexture != -1 ? _bspTextures[textureInfo.MipTexture] : ClipTexture;
 
-                var s = textureInfo.S;
-                var t = textureInfo.T;
+                var s = textureInfo.S.ToDouble();
+                var t = textureInfo.T.ToDouble();
 
                 //make sure the two vectors aren't of zero length otherwise use the default
                 //vector to prevent a divide by zero in the map writing
-                if (new Vector3(textureInfo.S.X, textureInfo.S.Y, textureInfo.S.Z).Length() < 0.01)
+                if (new Vector3(s.X, s.Y, s.Z).Length < 0.01)
                 {
                     s = Vector4.UnitX;
                 }
 
-                if (new Vector3(textureInfo.T.X, textureInfo.T.Y, textureInfo.T.Z).Length() < 0.01)
+                if (new Vector3(t.X, t.Y, t.Z).Length < 0.01)
                 {
                     t = Vector4.UnitX;
                 }
@@ -362,7 +361,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 {
                     var originalPlane = _bspPlanes[side.PlaneNumber];
 
-                    var newdist = originalPlane.Distance + Vector3.Dot(originalPlane.Normal, origin);
+                    var newdist = originalPlane.Distance + Vector3D.Dot(originalPlane.Normal, origin);
                     planeNumber = FindFloatPlane(originalPlane.Normal, newdist);
                 }
                 else
@@ -398,8 +397,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                         var value = Vector3Utils.GetByIndex(ref point, j);
 
-                        if (MathF.Abs(value) < 0.2f) Vector3Utils.SetByIndex(ref point, j, 0);
-                        else if (MathF.Abs((int)value - value) < 0.3f) Vector3Utils.SetByIndex(ref point, j, (int)value);
+                        if (Math.Abs(value) < 0.2) Vector3Utils.SetByIndex(ref point, j, 0);
+                        else if (Math.Abs((int)value - value) < 0.3) Vector3Utils.SetByIndex(ref point, j, (int)value);
 
                         w.Points[i] = point;
                     }
@@ -412,9 +411,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     _ => 1
                 };
 
-                face.Vertices.Add(w.Points[p1]);
-                face.Vertices.Add(w.Points[1 - p1]);
-                face.Vertices.Add(w.Points[2]);
+                face.Vertices.Add(w.Points[p1].ToSingle());
+                face.Vertices.Add(w.Points[1 - p1].ToSingle());
+                face.Vertices.Add(w.Points[2].ToSingle());
 
                 mapBrush.Faces.Add(face);
             }
@@ -424,7 +423,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private void AddOriginBrush(DecompiledEntity entity, Vector3 origin)
         {
-            const float originBrushSize = 16;
+            const double originBrushSize = 16;
 
             var min = origin + (Vector3.One * -originBrushSize);
             var max = origin + (Vector3.One * originBrushSize);
@@ -443,8 +442,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 var texInfo = new TextureInfo
                 {
                     MipTexture = _originTextureIndex,
-                    S = new(uAxis, 0),
-                    T = new(vAxis, 0)
+                    S = new(uAxis.ToSingle(), 0),
+                    T = new(vAxis.ToSingle(), 0)
                 };
 
                 side.TextureInfo = _bspTexInfo.Count;

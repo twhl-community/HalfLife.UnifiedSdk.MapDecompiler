@@ -5,11 +5,8 @@ using Sledge.Formats.Bsp.Objects;
 using Sledge.Formats.Map.Objects;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Numerics;
 using System.Text.RegularExpressions;
-using System.Threading;
 using BspFace = Sledge.Formats.Bsp.Objects.Face;
-using BspPlane = Sledge.Formats.Bsp.Objects.Plane;
 using BspVersion = Sledge.Formats.Bsp.Version;
 using MapEntity = Sledge.Formats.Map.Objects.Entity;
 
@@ -35,7 +32,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private readonly Textures _bspTextures;
         private readonly Surfedges _bspSurfedges;
         private readonly Edges _bspEdges;
-        private readonly Vertices _bspVertices;
+        private readonly List<Vector3> _bspVertices;
         private readonly Leaves _bspLeaves;
         private readonly Entities _bspEntities;
         private readonly Models _bspModels;
@@ -68,13 +65,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             _bspTextures = _bspFile.Textures;
             _bspSurfedges = _bspFile.Surfedges;
             _bspEdges = _bspFile.Edges;
-            _bspVertices = _bspFile.Vertices;
+            _bspVertices = _bspFile.Vertices.Select(v => v.ToDouble()).ToList();
             _bspLeaves = _bspFile.Leaves;
             _bspEntities = _bspFile.Entities;
             _bspModels = _bspFile.Models;
 
             // Rebuild plane list to include both sides of all planes, remap faces to map to correct plane.
-            var originalPlanes = _bspFile.Planes;
+            var originalPlanes = _bspFile.Planes.Select(p => new BspPlane(p)).ToList();
 
             List<BspPlane> planes = new(originalPlanes.Count * 2);
 
@@ -315,11 +312,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 var components = Regex.Split(value, @"\s+");
 
-                Span<float> componentValues = stackalloc float[3];
+                Span<double> componentValues = stackalloc double[3];
 
                 for (int i = 0; i < 3 && i < components.Length; ++i)
                 {
-                    _ = float.TryParse(components[i], out componentValues[i]);
+                    _ = double.TryParse(components[i], out componentValues[i]);
                 }
 
                 origin.X = componentValues[0];
@@ -344,10 +341,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             }
         }
 
-        private int FindFloatPlane(Vector3 normal, float dist)
+        private int FindFloatPlane(Vector3 normal, double dist)
         {
             MathUtils.SnapPlane(normal, ref dist);
-            int hash = (int)MathF.Abs(dist) / 8;
+            int hash = (int)Math.Abs(dist) / 8;
             hash &= (PlaneHashes - 1);
 
             // search the border bins as well
@@ -366,9 +363,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             return CreateNewFloatPlane(normal, dist);
         }
 
-        private int CreateNewFloatPlane(Vector3 normal, float dist)
+        private int CreateNewFloatPlane(Vector3 normal, double dist)
         {
-            if (normal.Length() < 0.5)
+            if (normal.Length < 0.5)
                 throw new InvalidOperationException("FloatPlane: bad normal");
 
             // create a new plane
@@ -406,7 +403,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         {
             var p = _bspPlanes[planeNumber];
 
-            int hash = (int)MathF.Abs(p.Distance) / 8;
+            int hash = (int)Math.Abs(p.Distance) / 8;
             hash &= (PlaneHashes - 1);
 
             _planehashes[hash] = new(planeNumber, _planehashes[hash]);
@@ -426,8 +423,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             var plane = _bspPlanes[planenum];
 
             // check all points
-            float d_front = 0;
-            float d_back = 0;
+            double d_front = 0;
+            double d_back = 0;
 
             foreach (var side in brush.Sides)
             {
@@ -440,7 +437,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                 foreach (var point in w.Points)
                 {
-                    var d = Vector3.Dot(point, plane.Normal) - plane.Distance;
+                    var d = Vector3D.Dot(point, plane.Normal) - plane.Distance;
                     if (d > 0 && d > d_front)
                         d_front = d;
                     if (d < 0 && d < d_back)
@@ -630,8 +627,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             var plane = _bspPlanes[planenum];
 
             // check all points
-            float d_front = 0;
-            float d_back = 0;
+            double d_front = 0;
+            double d_back = 0;
 
             foreach (var side in brush.Sides)
             {
@@ -644,7 +641,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                 foreach (var point in w.Points)
                 {
-                    var d = Vector3.Dot(point, plane.Normal) - plane.Distance;
+                    var d = Vector3D.Dot(point, plane.Normal) - plane.Distance;
                     if (d > 0 && d > d_front)
                         d_front = d;
                     if (d < 0 && d < d_back)
@@ -818,7 +815,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             back = CheckVolume(b2);
         }
 
-        private float BrushVolume(BspBrush? brush)
+        private double BrushVolume(BspBrush? brush)
         {
             if (brush is null) return 0;
 
@@ -836,13 +833,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             var corner = w.Points[0];
 
             // make tetrahedrons to all other faces
-            float volume = 0;
+            double volume = 0;
             for (; i < brush.Sides.Count; ++i)
             {
                 w = brush.Sides[i].Winding;
                 if (w is null) continue;
                 var plane = _bspPlanes[brush.Sides[i].PlaneNumber];
-                var d = -(Vector3.Dot(corner, plane.Normal) - plane.Distance);
+                var d = -(Vector3D.Dot(corner, plane.Normal) - plane.Distance);
                 var area = w.Area();
                 volume += d * area;
             }
@@ -911,7 +908,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     //no face found yet
                     int bestfacenum = -1;
                     //minimum face size
-                    float largestarea = 1;
+                    double largestarea = 1;
                     //if optimizing the texture placement and not going for the
                     //least number of brushes
                     if (_options.BrushOptimization == BrushOptimization.BestTextureMatch)
@@ -1023,7 +1020,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         /// </summary>
         /// <param name="face"></param>
         /// <param name="winding"></param>
-        private float FaceOnWinding(BspFace face, Winding? winding)
+        private double FaceOnWinding(BspFace face, Winding? winding)
         {
             if (winding is null)
             {
@@ -1061,11 +1058,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 //create a plane through the edge vector, orthogonal to the face plane
                 //and with the normal vector pointing out of the face
                 var edgevec = v1 - v2;
-                var normal = Vector3.Cross(edgevec, plane.Normal);
-                normal = Vector3.Normalize(normal);
-                var dist = Vector3.Dot(normal, v1);
+                var normal = Vector3D.Cross(edgevec, plane.Normal);
+                normal = Vector3D.Normalize(normal);
+                var dist = Vector3D.Dot(normal, v1);
 
-                w = w.ChopWindingInPlace(normal, dist, 0.9f); //CLIP_EPSILON
+                w = w.ChopWindingInPlace(normal, dist, 0.9); //CLIP_EPSILON
             }
 
             return w?.Area() ?? 0;
@@ -1114,9 +1111,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 //create a plane through the edge vector, orthogonal to the face plane
                 //and with the normal vector pointing out of the face
                 var edgevec = v1 - v2;
-                var normal = Vector3.Cross(edgevec, plane.Normal);
-                normal = Vector3.Normalize(normal);
-                var dist = Vector3.Dot(normal, v1);
+                var normal = Vector3D.Cross(edgevec, plane.Normal);
+                normal = Vector3D.Normalize(normal);
+                var dist = Vector3D.Dot(normal, v1);
 
                 int planenum = FindFloatPlane(normal, dist);
                 //split the current brush
