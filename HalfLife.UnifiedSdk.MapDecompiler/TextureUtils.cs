@@ -8,41 +8,44 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
     {
         public static Contents TextureContents(string name)
         {
-            if (name.StartsWith("sky", StringComparison.OrdinalIgnoreCase))
-                return Contents.Solid;
+            if (name.Length > 0)
+            {
+                if (name.StartsWith("sky", StringComparison.OrdinalIgnoreCase))
+                    return Contents.Solid;
 
-            if (name.AsSpan()[1..].StartsWith("!lava", StringComparison.OrdinalIgnoreCase))
-                return Contents.Lava;
+                if (name.AsSpan()[1..].StartsWith("!lava", StringComparison.OrdinalIgnoreCase))
+                    return Contents.Lava;
 
-            if (name.AsSpan()[1..].StartsWith("!slime", StringComparison.OrdinalIgnoreCase))
-                return Contents.Slime;
+                if (name.AsSpan()[1..].StartsWith("!slime", StringComparison.OrdinalIgnoreCase))
+                    return Contents.Slime;
 
-            /*
-            if (!Q_strncasecmp (name, "!cur_90",7))
-                return CONTENTS_CURRENT_90;
-            if (!Q_strncasecmp (name, "!cur_0",6))
-                return CONTENTS_CURRENT_0;
-            if (!Q_strncasecmp (name, "!cur_270",8))
-                return CONTENTS_CURRENT_270;
-            if (!Q_strncasecmp (name, "!cur_180",8))
-                return CONTENTS_CURRENT_180;
-            if (!Q_strncasecmp (name, "!cur_up",7))
-                return CONTENTS_CURRENT_UP;
-            if (!Q_strncasecmp (name, "!cur_dwn",8))
-                return CONTENTS_CURRENT_DOWN;
-            //*/
-            if (name.StartsWith("!"))
-                return Contents.Water;
-            /*
-            if (!Q_strncasecmp (name, "origin",6))
-                return CONTENTS_ORIGIN;
-            if (!Q_strncasecmp (name, "clip",4))
-                return CONTENTS_CLIP;
-            if( !Q_strncasecmp( name, "translucent", 11 ) )
-                return CONTENTS_TRANSLUCENT;
-            if( name[0] == '@' )
-                return CONTENTS_TRANSLUCENT;
-            //*/
+                /*
+                if (!Q_strncasecmp (name, "!cur_90",7))
+                    return CONTENTS_CURRENT_90;
+                if (!Q_strncasecmp (name, "!cur_0",6))
+                    return CONTENTS_CURRENT_0;
+                if (!Q_strncasecmp (name, "!cur_270",8))
+                    return CONTENTS_CURRENT_270;
+                if (!Q_strncasecmp (name, "!cur_180",8))
+                    return CONTENTS_CURRENT_180;
+                if (!Q_strncasecmp (name, "!cur_up",7))
+                    return CONTENTS_CURRENT_UP;
+                if (!Q_strncasecmp (name, "!cur_dwn",8))
+                    return CONTENTS_CURRENT_DOWN;
+                //*/
+                if (name.StartsWith("!"))
+                    return Contents.Water;
+                /*
+                if (!Q_strncasecmp (name, "origin",6))
+                    return CONTENTS_ORIGIN;
+                if (!Q_strncasecmp (name, "clip",4))
+                    return CONTENTS_CLIP;
+                if( !Q_strncasecmp( name, "translucent", 11 ) )
+                    return CONTENTS_TRANSLUCENT;
+                if( name[0] == '@' )
+                    return CONTENTS_TRANSLUCENT;
+                //*/
+            }
 
             return Contents.Solid;
         }
