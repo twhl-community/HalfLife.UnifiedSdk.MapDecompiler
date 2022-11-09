@@ -9,10 +9,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Behaviors
     {
         private TextEditor? _textEditor = null;
 
-        public static readonly StyledProperty<string> TextProperty =
-            AvaloniaProperty.Register<DocumentTextBindingBehavior, string>(nameof(Text));
+        public static readonly StyledProperty<string?> TextProperty =
+            AvaloniaProperty.Register<DocumentTextBindingBehavior, string?>(nameof(Text));
 
-        public string Text
+        public string? Text
         {
             get => GetValue(TextProperty);
             set => SetValue(TextProperty, value);
@@ -48,13 +48,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Behaviors
             }
         }
 
-        private void TextPropertyChanged(string text)
+        private void TextPropertyChanged(string? text)
         {
-            if (_textEditor?.Document != null && text != null)
+            if (_textEditor?.Document != null)
             {
                 var caretOffset = _textEditor.CaretOffset;
-                _textEditor.Document.Text = text;
-                _textEditor.CaretOffset = caretOffset;
+                _textEditor.Document.Text = text ?? string.Empty;
+                _textEditor.CaretOffset = Math.Min(caretOffset, text?.Length ?? 0);
             }
         }
     }
