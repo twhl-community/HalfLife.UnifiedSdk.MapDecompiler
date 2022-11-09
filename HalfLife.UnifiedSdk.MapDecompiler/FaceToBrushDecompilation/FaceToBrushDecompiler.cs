@@ -19,6 +19,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
 
+        private readonly Planes _bspPlanes;
         private readonly Faces _bspFaces;
         private readonly Texinfo _bspTexInfo;
         private readonly Textures _bspTextures;
@@ -34,6 +35,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             _bspFile = bspFile;
 
             // Cache lumps to avoid lookup overhead.
+            _bspPlanes = _bspFile.Planes;
             _bspFaces = _bspFile.Faces;
             _bspTexInfo = _bspFile.Texinfo;
             _bspTextures = _bspFile.Textures;
@@ -141,7 +143,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             var model = _bspModels[modelNumber];
 
-            foreach (var side in Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => FaceToSide(_bspFaces[i])))
+            var sides = Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => FaceToSide(_bspFaces[i])).ToList();
+
+            sides = MergeSides(modelNumber, sides);
+
+            foreach (var side in sides)
             {
                 var brush = CreateMapBrush(modelNumber, side, origin);
 
@@ -172,7 +178,185 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 points.Add(_bspVertices[side ? edge.Start : edge.End]);
             }
 
-            return new(face.Plane, face.TextureInfo, new(points));
+            return new(face.Plane, face.Side, face.TextureInfo, new(points));
+        }
+
+        private List<BspSide> MergeSides(int modelNumber, List<BspSide> sides)
+        {
+            List<BspSide> result = new(sides.Count);
+
+            int totalMergedCount = 0;
+            int mergedCount;
+
+            // Keep trying to merge until a pass doesn't merge anything.
+            // This way all possible merges are performed.
+            do
+            {
+                mergedCount = 0;
+
+                foreach (var side in sides)
+                {
+                    mergedCount += MergeSideToList(side, result);
+                }
+
+                totalMergedCount += mergedCount;
+
+                if (mergedCount > 0)
+                {
+                    sides = result;
+                    result = new(sides.Count);
+                }
+            }
+            while (mergedCount > 0);
+
+            if (totalMergedCount > 0)
+            {
+                _logger.Information("Model {ModelNumber}: merged {Count} faces", modelNumber, totalMergedCount);
+            }
+
+            return result;
+        }
+
+        private int MergeSideToList(BspSide side, List<BspSide> sides)
+        {
+            int mergedCount = 0;
+
+            for (int i = 0; i < sides.Count; ++i)
+            {
+                var newSide = TryMerge(side, sides[i]);
+
+                if (newSide is null)
+                {
+                    continue;
+                }
+
+                // Swap out the now-merged side with the new side.
+                sides[i] = newSide;
+                ++mergedCount;
+            }
+
+            // didn't merge, so add at end
+            if (mergedCount == 0)
+            {
+                sides.Add(side);
+            }
+
+            return mergedCount;
+        }
+
+        /// <summary>
+        /// If two polygons share a common edge and the edges that meet at the
+        /// common points are both inside the other polygons, merge them
+        /// </summary>
+        /// <param name="f1"></param>
+        /// <param name="f2"></param>
+        private BspSide? TryMerge(BspSide f1, BspSide f2)
+        {
+            if (f1.PlaneNumber != f2.PlaneNumber)
+                return null;
+
+            if (f1.Side != f2.Side)
+                return null;
+
+            if (f1.TextureInfo != f2.TextureInfo)
+                return null;
+
+            //
+            // find a common edge
+            //	
+            var p1 = Vector3.Zero;
+            var p2 = Vector3.Zero;
+
+            int i;
+            int j = 0;
+
+            for (i = 0; i < f1.Winding.Points.Count; ++i)
+            {
+                p1 = f1.Winding.Points[i];
+                p2 = f1.Winding.Points[(i + 1) % f1.Winding.Points.Count];
+
+                for (j = 0; j < f2.Winding.Points.Count; ++j)
+                {
+                    var p3 = f2.Winding.Points[j];
+                    var p4 = f2.Winding.Points[(j + 1) % f2.Winding.Points.Count];
+
+                    int k;
+                    for (k = 0; k < 3; ++k)
+                    {
+                        if (MathF.Abs(Vector3Utils.GetByIndex(ref p1, k) - Vector3Utils.GetByIndex(ref p4, k)) > MathConstants.EqualEpsilon)
+                            break;
+                        if (MathF.Abs(Vector3Utils.GetByIndex(ref p2, k) - Vector3Utils.GetByIndex(ref p3, k)) > MathConstants.EqualEpsilon)
+                            break;
+                    }
+
+                    if (k == 3)
+                        break;
+                }
+
+                if (j < f2.Winding.Points.Count)
+                    break;
+            }
+
+            if (i == f1.Winding.Points.Count)
+                return null;            // no matching edges
+
+            //
+            // check slope of connected lines
+            // if the slopes are colinear, the point can be removed
+            //
+            var plane = _bspPlanes[f1.PlaneNumber];
+            var planenormal = plane.Normal;
+
+            if (f1.Side != 0)
+                planenormal = -planenormal;
+
+            var back = f1.Winding.Points[(i + f1.Winding.Points.Count - 1) % f1.Winding.Points.Count];
+            var normal = Vector3.Normalize(Vector3.Cross(planenormal, p1 - back));
+
+            back = f2.Winding.Points[(j + 2) % f2.Winding.Points.Count];
+            var dot = Vector3.Dot(back - p1, normal);
+
+            if (dot > MathConstants.ContinuousEpsilon)
+                return null;            // not a convex polygon
+
+            var keep1 = dot < -MathConstants.ContinuousEpsilon;
+
+            back = f1.Winding.Points[(i + 2) % f1.Winding.Points.Count];
+            normal = Vector3.Normalize(Vector3.Cross(planenormal, back - p2));
+
+            back = f2.Winding.Points[(j + f2.Winding.Points.Count - 1) % f2.Winding.Points.Count];
+            dot = Vector3.Dot(back - p2, normal);
+
+            if (dot > MathConstants.ContinuousEpsilon)
+                return null;            // not a convex polygon
+
+            var keep2 = dot < -MathConstants.ContinuousEpsilon;
+
+            //
+            // build the new polygon
+            //
+
+            BspSide newf = new(f1.PlaneNumber, f1.Side, f1.TextureInfo, new(f1.Winding.Points.Count + f2.Winding.Points.Count));
+
+            // copy first polygon
+            for (int k = (i + 1) % f1.Winding.Points.Count; k != i; k = (k + 1) % f1.Winding.Points.Count)
+            {
+                if (k == (i + 1) % f1.Winding.Points.Count && !keep2)
+                    continue;
+
+                newf.Winding.Points.Add(f1.Winding.Points[k]);
+            }
+
+            // copy second polygon
+            for (int l = (j + 1) % f2.Winding.Points.Count; l != j; l = (l + 1) % f2.Winding.Points.Count)
+            {
+                if (l == (j + 1) % f2.Winding.Points.Count && !keep1)
+                    continue;
+
+                newf.Winding.Points.Add(f2.Winding.Points[l]);
+            }
+
+            return newf;
         }
 
         private Solid? CreateMapBrush(int modelNumber, BspSide side, Vector3 origin)
