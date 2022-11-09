@@ -368,13 +368,24 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             }
 
             const float BrushThickness = 1.0f;
-            const float MinimumLength = 0.1f;
-
-            Solid solid = new();
 
             var firstFrontVertex = side.Winding.Points[0];
             var secondFrontVertex = side.Winding.Points[1];
             var thirdFrontVertex = Vector3.Zero;
+
+            if (side.Winding.IsTiny())
+            {
+                _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is tiny",
+                        modelNumber, firstFrontVertex);
+                return null;
+            }
+
+            if (side.Winding.IsHuge())
+            {
+                _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is huge",
+                        modelNumber, firstFrontVertex);
+                return null;
+            }
 
             var planeNormal = _bspPlanes[side.PlaneNumber].Normal;
 
@@ -409,10 +420,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 if (i >= side.Winding.Points.Count)
                 {
                     _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
-                    modelNumber, firstFrontVertex);
+                        modelNumber, firstFrontVertex);
                     return null;
                 }
             }
+
+            Solid solid = new();
 
             var textureInfo = _bspTexInfo[side.TextureInfo];
             var texture = _bspTextures[textureInfo.MipTexture];
