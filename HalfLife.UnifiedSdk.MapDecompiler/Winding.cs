@@ -361,6 +361,48 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             return f;
         }
 
+        public static Winding RemoveCollinearPoints(Winding winding)
+        {
+            var result = winding.Clone();
+
+            Span<float> lengths = stackalloc float[3];
+
+            bool removed;
+
+            // Check again after the first loop to make sure no new collinear points exist.
+            do
+            {
+                removed = false;
+
+                for (int i = 2; i < result.Points.Count;)
+                {
+                    var firstVertex = result.Points[i - 2];
+                    var secondVertex = result.Points[i - 1];
+                    var thirdVertex = result.Points[i];
+
+                    lengths[0] = (firstVertex - secondVertex).Length();
+                    lengths[1] = (thirdVertex - secondVertex).Length();
+                    lengths[2] = (firstVertex - thirdVertex).Length();
+
+                    lengths.Sort();
+
+                    if (MathF.Abs(lengths[2] - (lengths[0] + lengths[1])) <= MathConstants.ContinuousEpsilon)
+                    {
+                        // Remove middle point.
+                        result.Points.RemoveAt(i - 1);
+                        removed = true;
+                    }
+                    else
+                    {
+                        ++i;
+                    }
+                }
+            }
+            while (removed);
+
+            return result;
+        }
+
         public static bool AreNonConvex(Winding? w1, Winding? w2,
                              Vector3 normal1, Vector3 normal2,
                              float dist1, float dist2)

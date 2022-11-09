@@ -367,20 +367,29 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 throw new InvalidOperationException("Face with too few edges");
             }
 
+            var winding = Winding.RemoveCollinearPoints(side.Winding);
+
+            if (winding.Points.Count < 3)
+            {
+                _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
+                        modelNumber, winding.Points[0]);
+                return null;
+            }
+
             const float BrushThickness = 1.0f;
 
-            var firstFrontVertex = side.Winding.Points[0];
-            var secondFrontVertex = side.Winding.Points[1];
-            var thirdFrontVertex = Vector3.Zero;
+            var firstFrontVertex = winding.Points[0];
+            var secondFrontVertex = winding.Points[1];
+            var thirdFrontVertex = winding.Points[2];
 
-            if (side.Winding.IsTiny())
+            if (winding.IsTiny())
             {
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is tiny",
                         modelNumber, firstFrontVertex);
                 return null;
             }
 
-            if (side.Winding.IsHuge())
+            if (winding.IsHuge())
             {
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is huge",
                         modelNumber, firstFrontVertex);
@@ -392,37 +401,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             if (side.Side != 0)
             {
                 planeNormal = -planeNormal;
-            }
-
-            {
-                Span<float> lengths = stackalloc float[3];
-
-                int i;
-
-                // Find the first non-collinear point in this face.
-                for (i = 2; i < side.Winding.Points.Count; ++i)
-                {
-                    thirdFrontVertex = side.Winding.Points[i];
-
-                    lengths[0] = (firstFrontVertex - secondFrontVertex).Length();
-                    lengths[1] = (thirdFrontVertex - secondFrontVertex).Length();
-                    lengths[2] = (firstFrontVertex - thirdFrontVertex).Length();
-
-                    lengths.Sort();
-
-                    if (MathF.Abs(lengths[2] - (lengths[0] + lengths[1])) > MathConstants.ContinuousEpsilon)
-                    {
-                        break;
-                    }
-                }
-
-                // Some faces have only collinear points so we can't generate brushes from them.
-                if (i >= side.Winding.Points.Count)
-                {
-                    _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
-                        modelNumber, firstFrontVertex);
-                    return null;
-                }
             }
 
             Solid solid = new();
@@ -475,11 +453,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             solid.Faces.Add(backFace);
 
             // Generate faces for each edge to connect front and back.
-            foreach (var edgeIndex in Enumerable.Range(0, side.Winding.Points.Count))
+            foreach (var edgeIndex in Enumerable.Range(0, winding.Points.Count))
             {
                 // Note: these vertices are in reversed order compared to the front faces.
-                var thirdSideVertex = side.Winding.Points[edgeIndex];
-                var secondSideVertex = side.Winding.Points[(edgeIndex + 1) % side.Winding.Points.Count];
+                var thirdSideVertex = winding.Points[edgeIndex];
+                var secondSideVertex = winding.Points[(edgeIndex + 1) % winding.Points.Count];
 
                 var firstSideVertex = secondSideVertex + normal;
 
