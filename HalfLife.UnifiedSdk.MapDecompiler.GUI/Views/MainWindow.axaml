@@ -66,6 +66,7 @@ They cannot be changed afterwards without converting the file again.
 						  IsReadOnly="True"
 						  CanUserReorderColumns="False"
 						  CanUserSortColumns="False"
+						  SelectionMode="Single"
 						  SelectedItem="{Binding CurrentJob}">
 					<DataGrid.Columns>
 						<DataGridTextColumn Header="From" Binding="{Binding From}"/>
