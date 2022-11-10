@@ -40,20 +40,20 @@
 				<Button Content="Cancel" Command="{Binding CancelCommand}"/>
 			</StackPanel>
 			
-			<TextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
-Welcome to the Half-Life Unified SDK Map Decompiler
-
-To convert files go to the File menu and choose Convert.
-Multiple bsp files can be selected in the Convert dialog.
-The conversions will be listed in the list view on the left.
-Any number of conversions can be listed and will be processed in parallel.
-While converting conversions can be added to and deleted from the list.
-Select a conversion to see its log.
-
-Configure the decompiler options on the left.
-Options are applied when files are added.
-They cannot be changed afterwards without converting the file again.
-			</TextBlock>
+			<RichTextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap">
+Welcome to the Half-Life Unified SDK Map Decompiler<LineBreak/>
+<LineBreak/>
+To convert files go to the File menu and choose Convert.<LineBreak/>
+Multiple bsp files can be selected in the Convert dialog.<LineBreak/>
+The conversions will be listed in the list view on the left.<LineBreak/>
+Any number of conversions can be listed and will be processed in parallel.<LineBreak/>
+While converting conversions can be added to and deleted from the list.<LineBreak/>
+Select a conversion to see its log.<LineBreak/>
+<LineBreak/>
+Configure the decompiler options on the left.<LineBreak/>
+Options are applied when files are added.<LineBreak/>
+They cannot be changed afterwards without converting the file again.<LineBreak/>
+			</RichTextBlock>
 
 			<Grid Grid.Column="0" Grid.ColumnSpan="2"
 				  Grid.Row="2"
