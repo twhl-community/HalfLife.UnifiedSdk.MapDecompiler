@@ -1,4 +1,6 @@
-﻿namespace HalfLife.UnifiedSdk.MapDecompiler
+﻿using System.Text.RegularExpressions;
+
+namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     internal static class Vector3Utils
     {
@@ -37,6 +39,22 @@
                 case 2: vector.Z = value; break;
                 default: throw new ArgumentOutOfRangeException(nameof(index), index, "Vector component index out of range");
             }
+        }
+
+        public static Vector3 ParseVector3(string value)
+        {
+            var components = Regex.Split(value, @"\s+");
+
+            Span<double> componentValues = stackalloc double[3];
+
+            componentValues.Clear();
+
+            for (int i = 0; i < 3 && i < components.Length; ++i)
+            {
+                _ = double.TryParse(components[i], out componentValues[i]);
+            }
+
+            return new(componentValues[0], componentValues[1], componentValues[2]);
         }
     }
 }

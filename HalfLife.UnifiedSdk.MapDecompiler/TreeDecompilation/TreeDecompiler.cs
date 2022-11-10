@@ -5,7 +5,6 @@ using Sledge.Formats.Bsp.Objects;
 using Sledge.Formats.Map.Objects;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using BspFace = Sledge.Formats.Bsp.Objects.Face;
 using BspVersion = Sledge.Formats.Bsp.Version;
 using MapEntity = Sledge.Formats.Map.Objects.Entity;
@@ -45,7 +44,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private readonly ImmutableDictionary<int, string> _textureNameMap;
 
         private int _numMapBrushes;
-        private int _numMapBrushSides;
         private int _numClipBrushes;
 
         private readonly int _originTextureIndex;
@@ -310,18 +308,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             if (entity.Entity.Properties.TryGetValue("origin", out var value))
             {
-                var components = Regex.Split(value, @"\s+");
-
-                Span<double> componentValues = stackalloc double[3];
-
-                for (int i = 0; i < 3 && i < components.Length; ++i)
-                {
-                    _ = double.TryParse(components[i], out componentValues[i]);
-                }
-
-                origin.X = componentValues[0];
-                origin.Y = componentValues[1];
-                origin.Z = componentValues[2];
+                origin = Vector3Utils.ParseVector3(value);
             }
 
             foreach (var brush in brushlist)

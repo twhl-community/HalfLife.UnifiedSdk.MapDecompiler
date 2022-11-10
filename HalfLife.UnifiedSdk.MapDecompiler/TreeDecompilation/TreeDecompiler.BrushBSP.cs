@@ -94,7 +94,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                             return new();
                         }
 
-                    // TODO: these assigned contents are different values in the original decompiler. It might make a difference.
                     case Contents.Solid:
                     case Contents.Clip:
                     case Contents.Sky:

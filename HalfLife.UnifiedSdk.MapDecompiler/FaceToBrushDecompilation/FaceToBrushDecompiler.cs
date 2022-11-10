@@ -2,7 +2,6 @@
 using Sledge.Formats.Bsp;
 using Sledge.Formats.Bsp.Lumps;
 using Sledge.Formats.Map.Objects;
-using System.Text.RegularExpressions;
 using BspFace = Sledge.Formats.Bsp.Objects.Face;
 using BspVersion = Sledge.Formats.Bsp.Version;
 using MapEntity = Sledge.Formats.Map.Objects.Entity;
@@ -126,19 +125,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             if (entity.Properties.TryGetValue("origin", out var value))
             {
-                var components = Regex.Split(value, @"\s+");
-
-                // TODO: refactor
-                Span<double> componentValues = stackalloc double[3];
-
-                for (int i = 0; i < 3 && i < components.Length; ++i)
-                {
-                    _ = double.TryParse(components[i], out componentValues[i]);
-                }
-
-                origin.X = componentValues[0];
-                origin.Y = componentValues[1];
-                origin.Z = componentValues[2];
+                origin = Vector3Utils.ParseVector3(value);
             }
 
             var model = _bspModels[modelNumber];
@@ -430,7 +417,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 thirdFrontVertex
             };
 
-            frontFace.Vertices.AddRange(frontVertices.Select(v => v.ToSingle()));
+            frontFace.Vertices.AddRange(frontVertices.Select(v => (v + origin).ToSingle()));
 
             // Create back face from front face.
             MapFace backFace = new()
@@ -449,7 +436,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             var normal = planeNormal * -BrushThickness;
 
             // Add front face vertices in reverse order to flip direction and offset to create thicker brush.
-            backFace.Vertices.AddRange(frontVertices.Reverse().Select(v => (v + normal).ToSingle()));
+            backFace.Vertices.AddRange(frontVertices.Reverse().Select(v => (v + origin + normal).ToSingle()));
 
             solid.Faces.Add(frontFace);
             solid.Faces.Add(backFace);
@@ -482,22 +469,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                     VAxis = vAxis.ToSingle()
                 };
 
-                sideFace.Vertices.Add(firstSideVertex.ToSingle());
-                sideFace.Vertices.Add(secondSideVertex.ToSingle());
-                sideFace.Vertices.Add(thirdSideVertex.ToSingle());
+                sideFace.Vertices.Add((firstSideVertex + origin).ToSingle());
+                sideFace.Vertices.Add((secondSideVertex + origin).ToSingle());
+                sideFace.Vertices.Add((thirdSideVertex + origin).ToSingle());
 
                 solid.Faces.Add(sideFace);
-            }
-
-            var singleOrigin = origin.ToSingle();
-
-            foreach (var mapFace in solid.Faces)
-            {
-                for (int i = 0; i < mapFace.Vertices.Count; ++i)
-                {
-                    // TODO: do this earlier so precision is better
-                    mapFace.Vertices[i] += singleOrigin;
-                }
             }
 
             return solid;
@@ -525,9 +501,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private static Solid CreateOriginBrush(Vector3 origin)
         {
-            //TODO: merge with constant in Tree decompiler.
-            const double originBrushSize = 16;
-
             Solid solid = new();
 
             // Create six faces, each facing along a major axis.
@@ -556,7 +529,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 // Generate 3 vertices on this face's plane.
                 foreach (ref readonly var sourceVertex in faceVertices)
                 {
-                    var vertex = sourceVertex * originBrushSize;
+                    var vertex = sourceVertex * MapDecompilerConstants.OriginBrushSize;
 
                     vertex = Vector3D.Transform(vertex, rotation);
 

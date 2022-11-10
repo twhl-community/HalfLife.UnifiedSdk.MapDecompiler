@@ -23,8 +23,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     //this brush side is textured
                     besttexinfo = side.TextureInfo;
                 }
-
-                ++_numMapBrushSides;
             }
 
             if (besttexinfo == TexInfoNode)
@@ -172,7 +170,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
                     if (i == b.Brush.Sides.Count)
                     {   // add a new side
-                        ++_numMapBrushSides;
                         var normal = Vector3.Zero;
                         Vector3Utils.SetByIndex(ref normal, axis, dir);
 
@@ -293,9 +290,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                             }
 
                             // add this plane
-
-                            ++_numMapBrushSides;
-
                             var firstSide = b.Brush.Sides[0];
 
                             var s2 = new BspSide
@@ -423,10 +417,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private void AddOriginBrush(DecompiledEntity entity, Vector3 origin)
         {
-            const double originBrushSize = 16;
-
-            var min = origin + (Vector3.One * -originBrushSize);
-            var max = origin + (Vector3.One * originBrushSize);
+            var min = origin + (Vector3.One * -MapDecompilerConstants.OriginBrushSize);
+            var max = origin + (Vector3.One * MapDecompilerConstants.OriginBrushSize);
 
             var brush = BrushFromBounds(min, max);
 
