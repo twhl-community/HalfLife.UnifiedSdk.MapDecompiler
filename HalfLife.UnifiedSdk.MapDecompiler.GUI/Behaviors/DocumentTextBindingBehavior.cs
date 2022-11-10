@@ -30,7 +30,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Behaviors
             if (AssociatedObject is TextArea textArea)
             {
                 _textArea = textArea;
-                _scrollViewer = _textArea.GetLogicalParent<ScrollViewer?>();
+                _scrollViewer = _textArea.GetLogicalParent<ScrollViewer>();
                 this.GetObservable(TextProperty).Subscribe(TextPropertyChanged);
 
                 if (_scrollViewer is not null)

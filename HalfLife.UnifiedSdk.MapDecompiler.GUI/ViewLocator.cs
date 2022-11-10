@@ -7,8 +7,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
 {
     public class ViewLocator : IDataTemplate
     {
-        public IControl Build(object data)
+        public IControl Build(object? data)
         {
+            if (data is null)
+            {
+                return new TextBlock { Text = "Null viewmodel" };
+            }
+
             var name = data.GetType().FullName!.Replace("ViewModel", "View");
             var type = Type.GetType(name);
 
@@ -22,7 +27,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             }
         }
 
-        public bool Match(object data)
+        public bool Match(object? data)
         {
             return data is ViewModelBase;
         }
