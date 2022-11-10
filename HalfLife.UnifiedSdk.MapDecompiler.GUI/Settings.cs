@@ -29,6 +29,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
         private FluentThemeMode _theme = FluentThemeMode.Light;
 
         [DataMember]
+        [JsonConverter(typeof(StringEnumConverter))]
         public FluentThemeMode Theme
         {
             get => _theme;
