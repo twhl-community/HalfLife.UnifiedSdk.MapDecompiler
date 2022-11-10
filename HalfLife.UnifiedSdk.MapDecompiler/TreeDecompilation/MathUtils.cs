@@ -9,9 +9,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         public static void ClearBounds(ref Vector3 mins, ref Vector3 maxs)
         {
-            // TODO use proper constants
-            mins.X = mins.Y = mins.Z = 99999;
-            maxs.X = maxs.Y = maxs.Z = -99999;
+            mins.X = mins.Y = mins.Z = double.MaxValue;
+            maxs.X = maxs.Y = maxs.Z = double.MinValue;
         }
 
         public static void AddPointToBounds(Vector3 v, ref Vector3 mins, ref Vector3 maxs)
