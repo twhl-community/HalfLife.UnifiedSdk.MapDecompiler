@@ -423,9 +423,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 VAxis = textureProperties.VAxis
             };
 
-            frontFace.Vertices.Add(firstFrontVertex.ToSingle());
-            frontFace.Vertices.Add(secondFrontVertex.ToSingle());
-            frontFace.Vertices.Add(thirdFrontVertex.ToSingle());
+            var frontVertices = new[]
+            {
+                firstFrontVertex,
+                secondFrontVertex,
+                thirdFrontVertex
+            };
+
+            frontFace.Vertices.AddRange(frontVertices.Select(v => v.ToSingle()));
 
             // Create back face from front face.
             MapFace backFace = new()
@@ -444,10 +449,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             var normal = planeNormal * -BrushThickness;
 
             // Add front face vertices in reverse order to flip direction and offset to create thicker brush.
-            foreach (var vertex in ((IEnumerable<Vector3>)frontFace.Vertices).Reverse())
-            {
-                backFace.Vertices.Add((vertex + normal).ToSingle());
-            }
+            backFace.Vertices.AddRange(frontVertices.Reverse().Select(v => (v + normal).ToSingle()));
 
             solid.Faces.Add(frontFace);
             solid.Faces.Add(backFace);
