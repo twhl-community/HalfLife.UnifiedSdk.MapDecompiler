@@ -23,6 +23,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         {
             var logFileName = job.GetOutputFileName(MapDecompilerJobConstants.LogExtension);
 
+            Directory.CreateDirectory(job.OutputDirectory);
             File.Delete(logFileName);
 
             const string outputTemplate = "{Message:lj}{NewLine}{Exception}";
@@ -104,6 +105,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         {
             logger.Information("Writing {MapFileName}", job.MapFileName);
 
+            Directory.CreateDirectory(job.OutputDirectory);
             using var output = File.Open(job.MapFileName, FileMode.Create);
 
             MapSerialization.SerializeMap(_format, output, mapFile);
@@ -141,6 +143,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
                 logger.Information("Added {Count} textures", wadFile.Lumps.Count());
 
+                Directory.CreateDirectory(job.OutputDirectory);
                 using var stream = File.Open(wadFileName, FileMode.Create);
 
                 wadFile.Write(stream);
