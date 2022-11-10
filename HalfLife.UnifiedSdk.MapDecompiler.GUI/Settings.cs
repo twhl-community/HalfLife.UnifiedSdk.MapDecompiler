@@ -22,8 +22,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
         [IgnoreDataMember]
         private static string FileName => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Half-Life Unified SDK",
-            "MapDecompilerSettings.json");
+            MapDecompilerGuiConstants.ConfigDirectoryName,
+            MapDecompilerGuiConstants.ConfigFileName);
 
         // Must match setting in App.axaml
         private FluentThemeMode _theme = FluentThemeMode.Light;
