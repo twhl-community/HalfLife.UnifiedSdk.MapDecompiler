@@ -3,7 +3,7 @@ using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
 
-namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
+namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Converters
 {
     public class EnumToBooleanConverter : IValueConverter
     {

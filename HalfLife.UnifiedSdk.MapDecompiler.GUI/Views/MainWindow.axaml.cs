@@ -13,12 +13,22 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 {
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
+        private bool _loadedSettings;
+
         public MainWindow()
         {
             InitializeComponent();
 
             this.WhenActivated(d =>
             {
+                // Load settings now so initial layout is done.
+                // This is necessary so the decompiler options view is sized according to the first tab, which is the largest of the two.
+                if (!_loadedSettings)
+                {
+                    _loadedSettings = true;
+                    Settings.Default.Load();
+                }
+
                 d(ViewModel!.ShowConvertFilesDialog.RegisterHandler(DoShowOpenFileDialogAsync));
                 d(ViewModel!.ShowCancelJobsDialog.RegisterHandler(DoShowCancelJobsDialogAsync));
                 d(ViewModel!.DecompilerOptions.ShowBrowseDirectoryDialog.RegisterHandler(DoShowOpenDirectoryDialogAsync));
@@ -27,18 +37,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
         public void Theme_ChangeToLight(object? sender, RoutedEventArgs e)
         {
-            if (Application.Current!.Styles[0] is FluentTheme theme)
-            {
-                theme.Mode = FluentThemeMode.Light;
-            }
+            Settings.Default.Theme = FluentThemeMode.Light;
         }
 
         public void Theme_ChangeToDark(object? sender, RoutedEventArgs e)
         {
-            if (Application.Current!.Styles[0] is FluentTheme theme)
-            {
-                theme.Mode = FluentThemeMode.Dark;
-            }
+            Settings.Default.Theme = FluentThemeMode.Dark;
         }
 
         public async void About_Click(object? sender, RoutedEventArgs e)
@@ -89,7 +93,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
         {
             var dialog = new OpenFolderDialog
             {
-                Title = interaction.Input.Title
+                Title = interaction.Input.Title,
+                Directory = interaction.Input.Directory
             };
 
             var result = await dialog.ShowAsync(this);

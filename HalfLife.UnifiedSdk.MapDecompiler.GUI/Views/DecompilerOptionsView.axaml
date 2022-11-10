@@ -3,11 +3,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:HalfLife.UnifiedSdk.MapDecompiler;assembly=HalfLife.UnifiedSdk.MapDecompiler"
-             xmlns:gui="using:HalfLife.UnifiedSdk.MapDecompiler.GUI"
+             xmlns:converters="using:HalfLife.UnifiedSdk.MapDecompiler.GUI.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="HalfLife.UnifiedSdk.MapDecompiler.GUI.Views.DecompilerOptionsView">
     <UserControl.Resources>
-        <gui:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+        <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+        <converters:DecompilerStrategyToIntConverter x:Key="DecompilerStrategyToIntConverter"/>
     </UserControl.Resources>
 
     <Grid ColumnDefinitions="Auto, Auto, *"
@@ -19,7 +20,7 @@
 
             <Label Grid.Column="0" Content="Output Directory:"/>
             <TextBox Grid.Column="1"
-                     Text="{Binding OutputDirectory}"/>
+                     Text="{Binding Settings.OutputDirectory}"/>
             <Button Grid.Column="2"
                     Content="Browse"
                     Command="{Binding BrowseOutputDirectoryCommand}"/>
@@ -30,7 +31,7 @@
 
         <TabControl Grid.Column="0" Grid.Row="2"
                     Grid.IsSharedSizeScope="True"
-                    SelectedIndex="{Binding SelectedStrategy}">
+                    SelectedIndex="{Binding Settings.DecompilerStrategy, Converter={StaticResource DecompilerStrategyToIntConverter}}">
             <TabItem Header="Tree-Based Decompiler">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -43,23 +44,23 @@
 
                         <CheckBox Grid.Column="0" Grid.Row="1"
                                   Content="Merge Brushes"
-                                  IsChecked="{Binding MergeBrushes}"/>
+                                  IsChecked="{Binding Settings.MergeBrushes}"/>
 
                         <CheckBox Grid.Column="0" Grid.Row="2"
                                   Content="Include Liquids"
-                                  IsChecked="{Binding IncludeLiquids}"/>
+                                  IsChecked="{Binding Settings.IncludeLiquids}"/>
 
                         <Label Grid.Column="1" Grid.Row="0" Content="Brush Optimization:"/>
 
                         <RadioButton Grid.Column="1" Grid.Row="1"
                                      GroupName="BrushOptimization"
                                      Content="Best Texture Match"
-                                     IsChecked="{Binding Path=BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.BestTextureMatch}}" />
+                                     IsChecked="{Binding Path=Settings.BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.BestTextureMatch}}" />
 
                         <RadioButton Grid.Column="1" Grid.Row="2"
                                      GroupName="BrushOptimization"
                                      Content="Fewest Brushes"
-                                     IsChecked="{Binding Path=BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.FewestBrushes}}" />
+                                     IsChecked="{Binding Path=Settings.BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.FewestBrushes}}" />
                     </Grid>
                 </Grid>
             </TabItem>

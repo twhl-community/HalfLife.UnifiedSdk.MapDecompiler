@@ -122,7 +122,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     return;
                 }
 
-                var outputDirectory = DecompilerOptions.OutputDirectory;
+                var outputDirectory = DecompilerOptions.Settings.OutputDirectory;
 
                 if (outputDirectory.Length == 0)
                 {
@@ -195,7 +195,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             // Decompile each map one at a time.
             // Anything that relies on user settings should be created before starting the task to prevent race conditions.
             // Make sure to cache objects in local variables to prevent member variables from being captured.
-            var decompilerStrategy = DecompilerStrategies.Strategies[DecompilerOptions.SelectedStrategy];
+            var decompilerStrategy = DecompilerStrategies.Strategies.FirstOrDefault(s => s.Name == Settings.Default.DecompilerStrategy)
+                ?? DecompilerStrategies.Strategies[0];
             var decompilerOptions = DecompilerOptions.ToOptions();
 
             // If we're starting a single job just activate the job log automatically.

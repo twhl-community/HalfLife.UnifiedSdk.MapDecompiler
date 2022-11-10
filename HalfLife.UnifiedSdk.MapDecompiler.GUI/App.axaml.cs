@@ -21,9 +21,16 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
                 {
                     DataContext = new MainWindowViewModel(),
                 };
+
+                desktop.Exit += Desktop_Exit;
             }
 
             base.OnFrameworkInitializationCompleted();
+        }
+
+        private void Desktop_Exit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+        {
+            Settings.Default.Save();
         }
     }
 }

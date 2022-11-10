@@ -10,7 +10,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
         public static DecompilerStrategy FaceToBrushDecompilerStrategy { get; } = new FaceToBrushDecompilerStrategy();
 
-        public static ImmutableArray<DecompilerStrategy> Strategies { get; } = ImmutableArray.Create(
+        public static ImmutableList<DecompilerStrategy> Strategies { get; } = ImmutableList.Create(
             TreeDecompilerStrategy,
             FaceToBrushDecompilerStrategy);
     }
