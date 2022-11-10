@@ -2,25 +2,30 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+			 xmlns:ae="clr-namespace:AvaloniaEdit.Editing;assembly=AvaloniaEdit"
+			 xmlns:behaviors="using:HalfLife.UnifiedSdk.MapDecompiler.GUI.Behaviors"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="HalfLife.UnifiedSdk.MapDecompiler.GUI.Views.DecompilerOutputView">
 	<Grid RowDefinitions="*">
 		<TabControl SelectedIndex="{Binding LogIndex}">
 			<TabItem Header="Program Log">
-				<ScrollViewer Name="ProgramScrollViewer"
-							  ScrollChanged="ProgramScrollViewer_ScrollChanged">
-					<TextBox TextWrapping="Wrap"
-							 IsReadOnly="True"
-							 Text="{Binding ProgramOutput}"/>
+				<ScrollViewer>
+					<ae:TextArea Name="ProgramTextArea">
+						<i:Interaction.Behaviors>
+							<behaviors:DocumentTextBindingBehavior Text="{Binding ProgramOutput}"/>
+						</i:Interaction.Behaviors>
+					</ae:TextArea>
 				</ScrollViewer>
 			</TabItem>
 
 			<TabItem Header="Job Log">
-				<ScrollViewer Name="JobScrollViewer"
-							  ScrollChanged="JobScrollViewer_ScrollChanged">
-					<TextBox TextWrapping="Wrap"
-							 IsReadOnly="True"
-							 Text="{Binding CurrentJob.Output, Mode=OneWay, TargetNullValue='Waiting for job to start'}"/>
+				<ScrollViewer>
+					<ae:TextArea Name="JobTextArea">
+						<i:Interaction.Behaviors>
+							<behaviors:DocumentTextBindingBehavior Text="{Binding CurrentJob.Output, Mode=OneWay, TargetNullValue='Waiting for job to start'}"/>
+						</i:Interaction.Behaviors>
+					</ae:TextArea>
 				</ScrollViewer>
 			</TabItem>
 		</TabControl>

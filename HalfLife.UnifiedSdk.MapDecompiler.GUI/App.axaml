@@ -9,5 +9,6 @@
     <Application.Styles>
         <FluentTheme Mode="Light"/>
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
     </Application.Styles>
 </Application>
