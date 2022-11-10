@@ -273,6 +273,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
                 Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(CanDecompileAgain)));
             }
+            catch(Exception e)
+            {
+                _programLogger.Error(e, "An error occurred while processing one or more jobs");
+            }
             finally
             {
                 foreach (var job in jobs)
