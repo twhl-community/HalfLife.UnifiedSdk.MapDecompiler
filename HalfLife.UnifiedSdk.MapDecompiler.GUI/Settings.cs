@@ -52,6 +52,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             set => this.RaiseAndSetIfChanged(ref _outputDirectory, value);
         }
 
+        private string _lastConvertDirectory = Environment.CurrentDirectory;
+
+        [DataMember]
+        public string LastConvertDirectory
+        {
+            get => _lastConvertDirectory;
+            set => this.RaiseAndSetIfChanged(ref _lastConvertDirectory, value);
+        }
+
         private string _decompilerStrategy = DecompilerStrategies.Strategies[0].Name;
 
         [DataMember]

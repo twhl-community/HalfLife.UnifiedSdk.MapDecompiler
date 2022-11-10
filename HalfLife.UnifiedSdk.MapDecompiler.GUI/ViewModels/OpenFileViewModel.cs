@@ -10,5 +10,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         public IEnumerable<FileFilter> Filters { get; set; } = Enumerable.Empty<FileFilter>();
 
         public bool AllowMultiple { get; set; } = false;
+
+        public string? Directory { get; set; }
     }
 }

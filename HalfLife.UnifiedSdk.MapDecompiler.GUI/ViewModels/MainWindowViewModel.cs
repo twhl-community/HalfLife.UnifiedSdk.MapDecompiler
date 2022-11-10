@@ -112,14 +112,21 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                         new FileFilter("Half-Life 1 BSP Files (.bsp)", "bsp"),
                         new FileFilter("All Files", "*")
                     },
-                    AllowMultiple = true
+                    AllowMultiple = true,
+                    Directory = Settings.Default.LastConvertDirectory
                 };
 
                 var result = await ShowConvertFilesDialog.Handle(store);
 
-                if (result is null)
+                if (result is null || result.Length == 0)
                 {
                     return;
+                }
+
+                // Use the directory that the first file is located in.
+                if (Path.GetDirectoryName(result[0]) is { } directoryName)
+                {
+                    Settings.Default.LastConvertDirectory = directoryName;
                 }
 
                 var outputDirectory = DecompilerOptions.Settings.OutputDirectory;
