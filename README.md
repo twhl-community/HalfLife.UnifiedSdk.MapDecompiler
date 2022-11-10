@@ -6,6 +6,8 @@ Unlike bspc and tools derived from it this decompiler does not support other Qua
 
 Whereas bspc was written in C this tool is written in C# to make its source code more accessible and easier to maintain.
 
+User configuration files for this application are stored in `AppData/Roaming/Half-Life Unified SDK` on Windows, and `home/.config` on Unix systems.
+
 This tool is part of the Half-Life Unified SDK. See the main [Unified SDK](https://github.com/SamVanheer/halflife-unified-sdk) repository for more information.
 
 Based on Quake 3's bspc tool: https://github.com/id-Software/Quake-III-Arena
