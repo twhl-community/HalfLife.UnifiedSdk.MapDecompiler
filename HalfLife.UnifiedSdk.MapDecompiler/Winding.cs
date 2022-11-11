@@ -365,38 +365,28 @@
 
             Span<double> lengths = stackalloc double[3];
 
-            bool removed;
-
-            // Check again after the first loop to make sure no new collinear points exist.
-            do
+            for (int i = 0; i < result.Points.Count;)
             {
-                removed = false;
+                var firstVertex = result.Points[i];
+                var secondVertex = result.Points[(i + 1) % result.Points.Count];
+                var thirdVertex = result.Points[(i + 2) % result.Points.Count];
 
-                for (int i = 2; i < result.Points.Count;)
+                lengths[0] = (firstVertex - secondVertex).Length;
+                lengths[1] = (thirdVertex - secondVertex).Length;
+                lengths[2] = (firstVertex - thirdVertex).Length;
+
+                lengths.Sort();
+
+                if (Math.Abs(lengths[2] - (lengths[0] + lengths[1])) <= MathConstants.ContinuousEpsilon)
                 {
-                    var firstVertex = result.Points[i - 2];
-                    var secondVertex = result.Points[i - 1];
-                    var thirdVertex = result.Points[i];
-
-                    lengths[0] = (firstVertex - secondVertex).Length;
-                    lengths[1] = (thirdVertex - secondVertex).Length;
-                    lengths[2] = (firstVertex - thirdVertex).Length;
-
-                    lengths.Sort();
-
-                    if (Math.Abs(lengths[2] - (lengths[0] + lengths[1])) <= MathConstants.ContinuousEpsilon)
-                    {
-                        // Remove middle point.
-                        result.Points.RemoveAt(i - 1);
-                        removed = true;
-                    }
-                    else
-                    {
-                        ++i;
-                    }
+                    // Remove middle point.
+                    result.Points.RemoveAt((i + 1) % result.Points.Count);
+                }
+                else
+                {
+                    ++i;
                 }
             }
-            while (removed);
 
             return result;
         }

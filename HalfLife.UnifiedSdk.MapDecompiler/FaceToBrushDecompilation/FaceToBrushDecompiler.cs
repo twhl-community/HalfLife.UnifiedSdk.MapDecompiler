@@ -368,7 +368,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             if (winding.Points.Count < 3)
             {
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
-                        modelNumber, winding.Points[0]);
+                        modelNumber, side.Winding.Points[0]);
                 return null;
             }
 
