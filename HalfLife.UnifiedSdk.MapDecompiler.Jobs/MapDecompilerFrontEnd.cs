@@ -84,11 +84,23 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
         {
             logger.Information("Loading map from {BspFileName}", job.BspFileName);
 
-            using var stream = File.OpenRead(job.BspFileName);
+            BspFile bspFile;
 
-            logger.Information("Deserializing BSP data");
+            {
+                using var stream = File.OpenRead(job.BspFileName);
 
-            var bspFile = new BspFile(stream);
+                logger.Information("Deserializing BSP data");
+
+                var result = BspSerialization.Deserialize(stream);
+
+                bspFile = result.BspFile;
+
+                if (result.IsHLAlphaMap)
+                {
+                    logger.Information("Deserializing Half-Life Alpha BSP data (version 29) as version 30");
+                    logger.Information("If this is a Quake 1 map decompilation will fail");
+                }
+            }
 
             LogTimeElapsed(logger);
 
