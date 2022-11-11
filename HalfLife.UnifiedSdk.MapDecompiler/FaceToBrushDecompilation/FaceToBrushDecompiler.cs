@@ -96,8 +96,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            foreach (var entity in entities)
+            // TODO: merge as much as possible of this with TreeDecompiler's version.
+            foreach (var e in entities.Select((e, i) => new { Entity = e, Index = i }))
             {
+                var entity = e.Entity;
+
                 int modelNumber = 0;
 
                 if (entity.ClassName != "worldspawn")
@@ -111,6 +114,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
                     //don't write BSP model numbers
                     entity.Properties.Remove("model");
+                }
+
+                if (modelNumber >= _bspModels.Count)
+                {
+                    _logger.Error("Entity {Index} ({ClassName}) has invalid model index {ModelNumber} (total {ModelCount} models)",
+                        e.Index, entity.ClassName, modelNumber, _bspModels.Count);
+                    continue;
                 }
 
                 CreateMapBrushes(entity, modelNumber);
