@@ -208,25 +208,24 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         {
             int mergedCount = 0;
 
-            for (int i = 0; i < sides.Count; ++i)
+            for (int i = 0; i < sides.Count;)
             {
                 var newSide = TryMerge(side, sides[i]);
 
                 if (newSide is null)
                 {
+                    ++i;
                     continue;
                 }
 
-                // Swap out the now-merged side with the new side.
-                sides[i] = newSide;
+                // Replace original with merged side and remove other side from list.
+                sides.RemoveAt(i);
+                side = newSide;
                 ++mergedCount;
             }
 
-            // didn't merge, so add at end
-            if (mergedCount == 0)
-            {
-                sides.Add(side);
-            }
+            // Add original or merged side.
+            sides.Add(side);
 
             return mergedCount;
         }
