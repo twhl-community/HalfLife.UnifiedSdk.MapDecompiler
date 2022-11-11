@@ -27,8 +27,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
                 var writer = new BinaryWriter(memoryStream);
 
                 writer.Write((uint)BspVersion.Goldsource);
-                memoryStream.Position = 0;
             }
+
+            memoryStream.Position = 0;
 
             return (new BspFile(memoryStream), magic == BspVersion.Quake1);
         }
