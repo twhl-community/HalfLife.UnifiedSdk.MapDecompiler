@@ -364,6 +364,44 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             const double BrushThickness = 1.0;
 
+            var planeNormal = _bspPlanes[side.PlaneNumber].Normal;
+
+            if (side.Side != 0)
+            {
+                planeNormal = -planeNormal;
+            }
+
+            // Check if the plane normal is slightly off from an axis normal.
+            // If so, snap it to the axis and round vertices to fix rounding errors.
+            {
+                bool zeroedOut = false;
+
+                for (int i = 0; i < 3; ++i)
+                {
+                    var c = Vector3Utils.GetByIndex(ref planeNormal, i);
+
+                    if (Math.Abs(c) < 0.01)
+                    {
+                        Vector3Utils.SetByIndex(ref planeNormal, i, c);
+                        zeroedOut = true;
+                    }
+                }
+
+                if (zeroedOut)
+                {
+                    planeNormal = Vector3D.Normalize(planeNormal);
+
+                    for (int i = 0; i < winding.Points.Count; ++i)
+                    {
+                        var vec = winding.Points[i];
+                        vec.X = Math.Round(vec.X, 1);
+                        vec.Y = Math.Round(vec.Y, 1);
+                        vec.Z = Math.Round(vec.Z, 1);
+                        winding.Points[i] = vec;
+                    }
+                }
+            }
+
             var firstFrontVertex = winding.Points[0];
             var secondFrontVertex = winding.Points[1];
             var thirdFrontVertex = winding.Points[2];
@@ -380,13 +418,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is huge",
                         modelNumber, firstFrontVertex);
                 return null;
-            }
-
-            var planeNormal = _bspPlanes[side.PlaneNumber].Normal;
-
-            if (side.Side != 0)
-            {
-                planeNormal = -planeNormal;
             }
 
             Solid solid = new();
