@@ -8,6 +8,10 @@ Whereas bspc was written in C this tool is written in C# to make its source code
 
 User configuration files for this application are stored in `AppData/Roaming/Half-Life Unified SDK` on Windows, and `home/.config` on Unix systems.
 
+Only Half-Life Alpha 0.52 and original Half-Life BSP files are supported. Quake1/2/3 and Source maps, as well as engine offshoots like Svengine and Paranoia 2 are not supported.
+
+Due to a lack of data in the BSP file the original brushes cannot be restored. Decompiled maps will never be 100% accurate, will be missing some geometry and will have invalid geometry in some cases.
+
 This tool is part of the Half-Life Unified SDK. See the main [Unified SDK](https://github.com/SamVanheer/halflife-unified-sdk) repository for more information.
 
 Based on Quake 3's bspc tool: https://github.com/id-Software/Quake-III-Arena
