@@ -212,7 +212,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 CurrentJob = jobs[0];
             }
 
-            _jobTask = _jobTask.ContinueWith(_ => ExecuteJobs(jobs, decompilerStrategy, decompilerOptions), TaskScheduler.Default);
+            _jobTask = _jobTask.ContinueWith(
+                (_, _) => ExecuteJobs(jobs, decompilerStrategy, decompilerOptions),
+                state: null,
+                cancellationToken: CancellationToken.None,
+                continuationOptions: TaskContinuationOptions.LongRunning,
+                scheduler: TaskScheduler.Default);
 
             this.RaisePropertyChanged(nameof(CanCancelJobs));
         }
