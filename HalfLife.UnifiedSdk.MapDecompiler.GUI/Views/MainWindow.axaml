@@ -40,7 +40,7 @@
 				<Button Content="Cancel" Command="{Binding CancelCommand}"/>
 			</StackPanel>
 			
-			<TextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap">
+			<SelectableTextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap">
 Welcome to the Half-Life Unified SDK Map Decompiler<LineBreak/>
 <LineBreak/>
 To convert files go to the File menu and choose Convert.<LineBreak/>
@@ -53,7 +53,7 @@ Select a conversion to see its log.<LineBreak/>
 Configure the decompiler options on the left.<LineBreak/>
 Options are applied when files are added.<LineBreak/>
 They cannot be changed afterwards without converting the file again.<LineBreak/>
-			</TextBlock>
+			</SelectableTextBlock>
 
 			<Grid Grid.Column="0" Grid.ColumnSpan="2"
 				  Grid.Row="2"
