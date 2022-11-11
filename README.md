@@ -19,8 +19,11 @@ Based on Quake 3's bspc tool: https://github.com/id-Software/Quake-III-Arena
 Includes code from Sledge by Daniel 'Logic & Trick' Walder: https://github.com/LogicAndTrick/sledge
 Includes code from Sledge.Formats by Daniel 'Logic & Trick' Walder: https://github.com/LogicAndTrick/sledge-formats
 
-LICENSE
-=======
+# Requirements
+
+You will need the .NET 6 or newer Desktop Runtime (the .NET SDK includes the runtime): https://dotnet.microsoft.com/en-us/download
+
+# LICENSE
 
 See [LICENSE](/LICENSE) for the GNU GENERAL PUBLIC LICENSE
 See [Sledge_LICENSE](/Sledge_LICENSE) for the BSD 3-Clause license
