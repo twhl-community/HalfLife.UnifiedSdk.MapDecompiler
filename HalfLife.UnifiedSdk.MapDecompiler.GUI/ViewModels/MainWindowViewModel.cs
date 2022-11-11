@@ -262,7 +262,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                             this.RaisePropertyChanged(nameof(CanDecompileAgain));
                         }
 
-                        _programLogger.Information("{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", job.From, job.To, timeElapsed);
+                        _programLogger.Information("{Failed}{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}",
+                            result == MapDecompilerJobStatus.Failed ? "(Failed) " : string.Empty, job.From, job.To, timeElapsed);
                     });
                 });
             }
