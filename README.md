@@ -19,6 +19,44 @@ Based on Quake 3's bspc tool: https://github.com/id-Software/Quake-III-Arena
 Includes code from Sledge by Daniel 'Logic & Trick' Walder: https://github.com/LogicAndTrick/sledge
 Includes code from Sledge.Formats by Daniel 'Logic & Trick' Walder: https://github.com/LogicAndTrick/sledge-formats
 
+# Decompiler strategies
+
+2 decompilers strategies are supported: Tree-based and Face-To-Brush.
+
+## Tree-based decompiler
+
+This decompiler works by processing the [Binary Space Partitioning](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree for hull 0 (point hull) for each brush model.
+
+The world itself is model 0 and contains all brushes not tied to a brush entity. Each brush entity adds one brush model to the map.
+
+The process used to generate brushes works by first calculating the bounding box for the model, then adding 8 units extra to it to account for walls on the outermost brush faces in the map.
+
+A brush of that size is then created, and is split in 2 repeatedly by walking the BSP tree.
+
+The resulting set of brushes is an approximate representation of the original map, but is not perfectly accurate.
+
+The texturing phase tries to find the face that the generated brushes faces are the closest match.
+
+If brush optimization is set to best texture match the brush is split if needed to more closely match the original brush face.
+
+If brush merging is enabled brushes that are found to have the same contents (e.g. solid, water, etc) and texture properties and that form a convex brush are merged together.
+
+Finally, each brush is converted to its map source file representation.
+
+Brushes that have no textures on any faces are skipped. This includes brushes that originated as `CLIP` or `NULL` textured brushes. This can leave some brush entities without any brushes.
+
+## Face-To-Brush decompiler
+
+This decompiler works by converting each brush face in the map to a brush of its own.
+
+This uses the map's visual meshes used to render brush models. This does not include `CLIP` brushes and brushes whose texture is stripped by the compiler (e.g. `NULL`).
+
+The process used to generate brushes works by first merging faces that have matching texture properties and that form a single flat and convex polygon.
+
+Each face is then converted to a brush by cloning the polygon, inverting it and offsetting it by the inverse of the face normal to form the back face. Additional faces are generated to connect the two faces.
+
+Finally, each brush is converted to its map source file representation.
+
 # Requirements
 
 You will need the .NET 6 or newer Desktop Runtime (the .NET SDK includes the runtime): https://dotnet.microsoft.com/en-us/download
