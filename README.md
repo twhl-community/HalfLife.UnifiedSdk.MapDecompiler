@@ -19,6 +19,10 @@ Based on Quake 3's bspc tool: https://github.com/id-Software/Quake-III-Arena
 Includes code from Sledge by Daniel 'Logic & Trick' Walder: https://github.com/LogicAndTrick/sledge
 Includes code from Sledge.Formats by Daniel 'Logic & Trick' Walder: https://github.com/LogicAndTrick/sledge-formats
 
+# Requirements
+
+You will need the .NET 6 or newer Desktop Runtime (the .NET SDK includes the runtime): https://dotnet.microsoft.com/en-us/download
+
 # Decompiler strategies
 
 2 decompilers strategies are supported: Tree-based and Face-To-Brush.
@@ -56,10 +60,6 @@ The process used to generate brushes works by first merging faces that have matc
 Each face is then converted to a brush by cloning the polygon, inverting it and offsetting it by the inverse of the face normal to form the back face. Additional faces are generated to connect the two faces.
 
 Finally, each brush is converted to its map source file representation.
-
-# Requirements
-
-You will need the .NET 6 or newer Desktop Runtime (the .NET SDK includes the runtime): https://dotnet.microsoft.com/en-us/download
 
 # LICENSE
 
