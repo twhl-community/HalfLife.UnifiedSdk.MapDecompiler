@@ -887,6 +887,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             BspBrush? prevbrush = null;
 
+            // Only check faces that are part of this model. This reduces processing time and increases accuracy.
+            var model = _bspModels[modelNumber];
+
             //go over the brush list
             for (int brushIndex = 0; brushIndex < brushlist.Count;)
             {
@@ -907,27 +910,31 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     double largestarea = 1;
                     //if optimizing the texture placement and not going for the
                     //least number of brushes
+
                     if (_options.BrushOptimization == BrushOptimization.BestTextureMatch)
                     {
                         int i;
-                        for (i = 0; i < _bspFaces.Count; ++i)
+                        for (i = 0; i < model.NumFaces; ++i)
                         {
+                            var faceIndex = model.FirstFace + i;
+                            var face = _bspFaces[faceIndex];
+
                             //the face must be in the same plane as the node plane that created
                             //this brush side
-                            if (_bspFaces[i].Plane == _bspNodes[sidenodenum].Plane)
+                            if (face.Plane == _bspNodes[sidenodenum].Plane)
                             {
                                 //get the area the face and the brush side overlap
-                                var area = FaceOnWinding(_bspFaces[i], side.Winding);
+                                var area = FaceOnWinding(face, side.Winding);
                                 //if this face overlaps the brush side winding more than previous faces
                                 if (area > largestarea)
                                 {
                                     //if there already was a face for texturing this brush side with
                                     //a different texture
                                     if (bestfacenum >= 0 &&
-                                            (_bspFaces[bestfacenum].TextureInfo != _bspFaces[i].TextureInfo))
+                                            (_bspFaces[bestfacenum].TextureInfo != face.TextureInfo))
                                     {
                                         //split the brush to fit the texture
-                                        var newbrushes = SplitBrushWithFace(brush!, _bspFaces[i]);
+                                        var newbrushes = SplitBrushWithFace(brush!, face);
                                         //if new brushes where created
                                         if (newbrushes is not null)
                                         {
@@ -949,32 +956,35 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                                     else
                                     {
                                         //best face for texturing this brush side
-                                        bestfacenum = i;
+                                        bestfacenum = faceIndex;
                                     }
                                 }
                             }
                         }
                         //if the brush was split the original brush is removed
                         //and we just continue with the next one in the list
-                        if (i < _bspFaces.Count) break;
+                        if (i < model.NumFaces) break;
                     }
                     else
                     {
                         //find the face with the largest overlap with this brush side
                         //for texturing the brush side
-                        for (int i = 0; i < _bspFaces.Count; ++i)
+                        for (int i = 0; i < model.NumFaces; ++i)
                         {
+                            var faceIndex = model.FirstFace + i;
+                            var face = _bspFaces[faceIndex];
+
                             //the face must be in the same plane as the node plane that created
                             //this brush side
-                            if (_bspFaces[i].Plane == _bspNodes[sidenodenum].Plane)
+                            if (face.Plane == _bspNodes[sidenodenum].Plane)
                             {
                                 //get the area the face and the brush side overlap
-                                var area = FaceOnWinding(_bspFaces[i], side.Winding);
+                                var area = FaceOnWinding(face, side.Winding);
                                 //if this face overlaps the brush side winding more than previous faces
                                 if (area > largestarea)
                                 {
                                     largestarea = area;
-                                    bestfacenum = i;
+                                    bestfacenum = faceIndex;
                                 }
                             }
                         }
