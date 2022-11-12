@@ -35,7 +35,7 @@ A brush of that size is then created, and is split in 2 repeatedly by walking th
 
 The resulting set of brushes is an approximate representation of the original map, but is not perfectly accurate.
 
-The texturing phase tries to find the face that the generated brushes faces are the closest match.
+The texturing phase tries to find the faces that the generated brush faces are the closest match to.
 
 If brush optimization is set to best texture match the brush is split if needed to more closely match the original brush face.
 
