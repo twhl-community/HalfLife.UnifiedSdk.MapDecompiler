@@ -153,25 +153,30 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 AddPlaneToHash(planeNumber);
             }
 
-            // Add ORIGIN texture to textures.
-            var originTexture = _bspTextures.FirstOrDefault(t => t.Name.Equals("ORIGIN", StringComparison.OrdinalIgnoreCase));
-
-            if (originTexture is null)
-            {
-                originTexture = new()
-                {
-                    Name = "ORIGIN",
-                };
-
-                _bspTextures.Add(originTexture);
-            }
-
-            _originTextureIndex = _bspTextures.IndexOf(originTexture);
+            // Add some tool textures.
+            _originTextureIndex = FindOrCreateTexture("ORIGIN");
 
             // Cache the texture name lookup map
             _textureNameMap = _bspTexInfo
                 .Select((t, i) => new { TexInfo = t, Index = i })
                 .ToImmutableDictionary(t => t.Index, t => _bspTextures[t.TexInfo.MipTexture].Name);
+        }
+
+        private int FindOrCreateTexture(string name)
+        {
+            var texture = _bspTextures.FirstOrDefault(t => t.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+            if (texture is null)
+            {
+                texture = new()
+                {
+                    Name = name,
+                };
+
+                _bspTextures.Add(texture);
+            }
+
+            return _bspTextures.IndexOf(texture);
         }
 
         public static MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
