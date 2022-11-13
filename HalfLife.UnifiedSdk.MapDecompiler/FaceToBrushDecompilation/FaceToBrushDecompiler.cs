@@ -353,21 +353,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 planeNormal = -planeNormal;
             }
 
-            var firstFrontVertex = winding.Points[0];
-            var secondFrontVertex = winding.Points[1];
-            var thirdFrontVertex = winding.Points[2];
-
             if (winding.IsTiny())
             {
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is tiny",
-                        modelNumber, firstFrontVertex);
+                        modelNumber, winding.Points[0]);
                 return null;
             }
 
             if (winding.IsHuge())
             {
                 _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face is huge",
-                        modelNumber, firstFrontVertex);
+                        modelNumber, winding.Points[0]);
                 return null;
             }
 
@@ -393,9 +389,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             var frontVertices = new[]
             {
-                firstFrontVertex,
-                secondFrontVertex,
-                thirdFrontVertex
+                winding.Points[0],
+                winding.Points[1],
+                winding.Points[2]
             };
 
             frontFace.Vertices.AddRange(frontVertices.Select(v => (v + origin).ToSingle()));
