@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,6 +32,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         public ICommand ConvertFilesCommand { get; }
 
         public Interaction<OpenFileViewModel, string[]?> ShowConvertFilesDialog { get; } = new();
+
+        public ICommand QuitCommand { get; }
+
+        public Interaction<Unit, Unit> QuitApplication { get; } = new();
 
         public ICommand CancelCommand { get; }
 
@@ -153,7 +158,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 QueueJobs(jobs);
             });
 
-            CancelCommand = ReactiveCommand.Create(() => CancelJobs(), this.WhenAnyValue(x => x.CanCancelJobs));
+            QuitCommand = ReactiveCommand.Create(async () => await QuitApplication.Handle(new()));
+
+            CancelCommand = ReactiveCommand.Create(async () => await CancelJobs(), this.WhenAnyValue(x => x.CanCancelJobs));
 
             DeleteCommand = ReactiveCommand.Create(
                 () => Files.Remove(CurrentJob!),

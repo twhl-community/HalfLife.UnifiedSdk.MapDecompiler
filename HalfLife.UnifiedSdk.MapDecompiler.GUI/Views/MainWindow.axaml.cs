@@ -6,6 +6,7 @@ using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
 using ReactiveUI;
 using System.ComponentModel;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
@@ -29,6 +30,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
                 }
 
                 d(ViewModel!.ShowConvertFilesDialog.RegisterHandler(DoShowOpenFileDialogAsync));
+                d(ViewModel!.QuitApplication.RegisterHandler(DoQuitApplication));
                 d(ViewModel!.ShowCancelJobsDialog.RegisterHandler(DoShowCancelJobsDialogAsync));
                 d(ViewModel!.DecompilerOptions.ShowBrowseDirectoryDialog.RegisterHandler(DoShowOpenDirectoryDialogAsync));
             });
@@ -86,6 +88,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
             var result = await dialog.ShowAsync(this);
             interaction.SetOutput(result);
+        }
+
+        private void DoQuitApplication(InteractionContext<Unit, Unit> interaction)
+        {
+            Close();
+            interaction.SetOutput(new());
         }
 
         private async Task DoShowOpenDirectoryDialogAsync(InteractionContext<OpenDirectoryViewModel, string?> interaction)
