@@ -102,6 +102,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             sides = MergeSides(modelNumber, sides);
 
+            int brushCount = 0;
+
             foreach (var side in sides)
             {
                 var brush = CreateMapBrush(modelNumber, side, origin);
@@ -109,12 +111,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 if (brush is not null)
                 {
                     entity.Children.Add(brush);
+                    ++brushCount;
                 }
             }
 
             if (origin != Vector3.Zero)
             {
                 entity.Children.Add(CreateOriginBrush(origin));
+                ++brushCount;
+            }
+
+            if (modelNumber == 0)
+            {
+                _logger.Information("{Count} brushes", brushCount);
             }
         }
 
@@ -138,6 +147,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private List<BspSide> MergeSides(int modelNumber, List<BspSide> sides)
         {
+            if (modelNumber == 0)
+            {
+                _logger.Information("Merging faces");
+            }
+
             List<BspSide> result = new(sides.Count);
 
             int totalMergedCount = 0;
