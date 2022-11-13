@@ -188,6 +188,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public async Task CancelJobs()
         {
+            _programLogger.Information("Cancelling jobs");
             _jobCancellationTokenSource.Cancel();
             await _jobTask;
             _jobTask = Task.CompletedTask;
@@ -269,8 +270,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                             this.RaisePropertyChanged(nameof(CanDecompileAgain));
                         }
 
-                        _programLogger.Information("{Failed}{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}",
-                            result == MapDecompilerJobStatus.Failed ? "(Failed) " : string.Empty, job.From, job.To, timeElapsed);
+                        _programLogger.Information("{Status}{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}",
+                            result != MapDecompilerJobStatus.Done ? $"({result}) " : string.Empty, job.From, job.To, timeElapsed);
                     });
                 });
             }

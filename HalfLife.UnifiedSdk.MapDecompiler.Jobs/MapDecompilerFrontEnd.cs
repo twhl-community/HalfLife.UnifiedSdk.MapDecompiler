@@ -46,6 +46,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var (bspFile, mapFile) = DecompileBSPFile(logger, job, decompilerStrategy, decompilerOptions, cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Don't cancel past this point since we're writing files to disk now.
                 WriteMapFile(logger, job, mapFile);
                 MaybeWriteWadFile(logger, job, bspFile);
                 status = MapDecompilerJobStatus.Done;
