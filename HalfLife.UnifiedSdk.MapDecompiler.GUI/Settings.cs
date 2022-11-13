@@ -62,6 +62,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             set => this.RaiseAndSetIfChanged(ref _lastConvertDirectory, value);
         }
 
+        private bool _generateWadFile = true;
+
+        [DataMember]
+        public bool GenerateWadFile
+        {
+            get => _generateWadFile;
+            set => this.RaiseAndSetIfChanged(ref _generateWadFile, value);
+        }
+
         private string _decompilerStrategy = DecompilerStrategies.Strategies[0].Name;
 
         [DataMember]

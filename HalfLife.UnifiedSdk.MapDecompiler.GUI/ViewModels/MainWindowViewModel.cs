@@ -213,6 +213,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             var decompilerStrategy = DecompilerStrategies.Strategies.FirstOrDefault(s => s.Name == Settings.Default.DecompilerStrategy)
                 ?? DecompilerStrategies.Strategies[0];
             var decompilerOptions = DecompilerOptions.ToOptions();
+            var generateWadFile = Settings.Default.GenerateWadFile;
+            var cancellationToken = _jobCancellationTokenSource.Token;
 
             // If we're starting a single job just activate the job log automatically.
             if (_jobTask.IsCompleted && jobs.Count == 1)
@@ -221,7 +223,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             }
 
             _jobTask = _jobTask.ContinueWith(
-                (_, _) => ExecuteJobs(jobs, decompilerStrategy, decompilerOptions),
+                (_, _) => ExecuteJobs(jobs, decompilerStrategy, decompilerOptions, generateWadFile, cancellationToken),
                 state: null,
                 cancellationToken: CancellationToken.None,
                 continuationOptions: TaskContinuationOptions.LongRunning,
@@ -238,7 +240,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             QueueJobs(new() { job });
         }
 
-        private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions)
+        private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerStrategy decompilerStrategy,
+            DecompilerOptions decompilerOptions, bool generateWadFile,
+            CancellationToken cancellationToken)
         {
             Dispatcher.UIThread.Post(() => _programLogger.Information("Starting {Count} new jobs", jobs.Count));
             _programStopwatch.Restart();
@@ -249,7 +253,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     jobs,
                     new ParallelOptions()
                     {
-                        CancellationToken = _jobCancellationTokenSource.Token,
+                        CancellationToken = cancellationToken,
                         // Use no more than half the cores to keep the UI responsive.
                         MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2),
                     },
@@ -257,7 +261,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 {
                     Dispatcher.UIThread.Post(() => job.Status = MapDecompilerJobStatus.Converting);
 
-                    var result = _decompiler.Decompile(job, decompilerStrategy, decompilerOptions, _jobCancellationTokenSource.Token);
+                    var result = _decompiler.Decompile(
+                        job, decompilerStrategy, decompilerOptions, generateWadFile, cancellationToken);
 
                     var timeElapsed = _programStopwatch.Elapsed;
 

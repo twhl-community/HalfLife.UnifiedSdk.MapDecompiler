@@ -40,6 +40,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 getDefaultValue: () => null,
                 description: "Directory to save decompiled maps to. Leave empty to use current working directory");
 
+            var generateWadFileOption = new Option<bool>(
+                "--generate-wad-file",
+                getDefaultValue: () => true,
+                description: "Whether to generate a WAD file if the map contains embedded textures");
+
             var mergeBrushesOption = new Option<bool>("--merge-brushes",
                 getDefaultValue: () => true,
                 description: "Whether to merge brushes");
@@ -56,13 +61,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
             {
                 decompilerStrategyOption,
                 destinationOption,
+                generateWadFileOption,
                 mergeBrushesOption,
                 includeLiquidsOption,
                 brushOptimizationOption,
                 filesArgument
             };
 
-            rootCommand.SetHandler((decompilerStrategy, destination, mergeBrushes, includeLiquids, brushOptimization, files) =>
+            rootCommand.SetHandler((decompilerStrategy, destination, generateWadFile, mergeBrushes, includeLiquids, brushOptimization, files) =>
             {
                 if (!files.Any())
                 {
@@ -111,13 +117,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
 
                 Parallel.ForEach(jobs, job =>
                 {
-                    decompiler.Decompile(job, decompilerStrategy, decompilerOptions, CancellationToken.None);
+                    decompiler.Decompile(job, decompilerStrategy, decompilerOptions, generateWadFile, CancellationToken.None);
 
                     // Write completed log to console.
                     // Because we're decompiling multiple maps at the same time the log output would be mixed otherwise.
                     Console.WriteLine(job.Output);
                 });
-            }, decompilerStrategyOption, destinationOption, mergeBrushesOption, includeLiquidsOption, brushOptimizationOption, filesArgument);
+            }, decompilerStrategyOption, destinationOption, generateWadFileOption,
+                mergeBrushesOption, includeLiquidsOption, brushOptimizationOption, filesArgument);
 
             return await rootCommand.InvokeAsync(args);
         }

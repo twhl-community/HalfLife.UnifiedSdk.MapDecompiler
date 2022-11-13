@@ -12,7 +12,7 @@
     </UserControl.Resources>
 
     <Grid ColumnDefinitions="Auto, Auto, *"
-          RowDefinitions="Auto, Auto, Auto">
+          RowDefinitions="Auto, Auto, Auto, Auto">
         <Grid Grid.Column="0" Grid.ColumnSpan="3"
               Grid.Row="0"
               ColumnDefinitions="Auto, *, Auto"
@@ -25,11 +25,19 @@
                     Content="Browse"
                     Command="{Binding BrowseOutputDirectoryCommand}"/>
         </Grid>
+
+        <Grid Grid.Column="0" Grid.Row="1"
+              ColumnDefinitions="Auto"
+              RowDefinitions="Auto">
+            <CheckBox Grid.Row="0"
+                      Content="Generate WAD file if the map contains embedded textures"
+                      IsChecked="{Binding Settings.GenerateWadFile}"/>
+        </Grid>
         
-        <Label Grid.Column="0" Grid.Row="1"
+        <Label Grid.Column="0" Grid.Row="2"
                Content="Select Decompiler:"/>
 
-        <TabControl Grid.Column="0" Grid.Row="2"
+        <TabControl Grid.Column="0" Grid.Row="3"
                     Grid.IsSharedSizeScope="True"
                     SelectedIndex="{Binding Settings.DecompilerStrategy, Converter={StaticResource DecompilerStrategyToIntConverter}}">
             <TabItem Header="Tree-Based Decompiler">

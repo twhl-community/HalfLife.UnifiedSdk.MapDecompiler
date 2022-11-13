@@ -19,7 +19,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         private readonly QuakeMapFormat _format = new();
 
-        public MapDecompilerJobStatus Decompile(MapDecompilerJob job, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions, CancellationToken cancellationToken)
+        public MapDecompilerJobStatus Decompile(
+            MapDecompilerJob job, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions,
+            bool generateWadFile,
+            CancellationToken cancellationToken)
         {
             var logFileName = job.GetOutputFileName(MapDecompilerJobConstants.LogExtension);
 
@@ -51,7 +54,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
                 // Don't cancel past this point since we're writing files to disk now.
                 WriteMapFile(logger, job, mapFile);
-                MaybeWriteWadFile(logger, job, bspFile);
+
+                if (generateWadFile)
+                {
+                    MaybeWriteWadFile(logger, job, bspFile);
+                }
+
                 status = MapDecompilerJobStatus.Done;
             }
             catch (OperationCanceledException)
