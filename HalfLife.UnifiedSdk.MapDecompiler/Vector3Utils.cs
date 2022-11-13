@@ -56,5 +56,31 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
             return new(componentValues[0], componentValues[1], componentValues[2]);
         }
+
+        /// <summary>
+        ///  Given a normal, checks if it's an axial normal and if so rounds down the other components to fix existing rounding errors.
+        /// </summary>
+        /// <param name="normal"></param>
+        public static void RoundNormal(ref Vector3 normal)
+        {
+            bool anyAre1 = false;
+
+            for (int i = 0; i < 3; ++i)
+            {
+                if (Math.Abs(GetByIndex(ref normal, i)) == 1)
+                {
+                    anyAre1 = true;
+                    break;
+                }
+            }
+
+            if (anyAre1)
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    SetByIndex(ref normal, i, Math.Floor(GetByIndex(ref normal, i)));
+                }
+            }
+        }
     }
 }

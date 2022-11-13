@@ -16,7 +16,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
         public BspPlane(Sledge.Formats.Bsp.Objects.Plane plane)
         {
-            Normal = plane.Normal.ToDouble();
+            var normal = plane.Normal.ToDouble();
+            // Fix rounding errors.
+            Vector3Utils.RoundNormal(ref normal);
+            Normal = normal;
             Distance = plane.Distance;
             Type = plane.Type;
         }
