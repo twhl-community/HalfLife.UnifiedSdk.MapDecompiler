@@ -33,7 +33,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private readonly Edges _bspEdges;
         private readonly List<Vector3> _bspVertices;
         private readonly Leaves _bspLeaves;
-        private readonly Entities _bspEntities;
         private readonly Models _bspModels;
 
         private Vector3 _mapMins;
@@ -65,7 +64,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             _bspEdges = _bspFile.Edges;
             _bspVertices = _bspFile.Vertices.Select(v => v.ToDouble()).ToList();
             _bspLeaves = _bspFile.Leaves;
-            _bspEntities = _bspFile.Entities;
             _bspModels = _bspFile.Models;
 
             // Rebuild plane list to include both sides of all planes, remap faces to map to correct plane.
@@ -204,7 +202,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private MapFile DecompileCore()
         {
-            Debug.Assert(_bspEntities[0].ClassName == "worldspawn");
+            var entitiesLump = _bspFile.Entities;
+
+            Debug.Assert(entitiesLump[0].ClassName == "worldspawn");
 
             if (_options.MergeBrushes)
             {
@@ -230,24 +230,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 _logger.Information("Excluding brushes with liquid content types (water, slime, lava)");
             }
 
-            MapFile mapFile = new();
-
-            static Dictionary<string, string> CopyKeyValues(Dictionary<string, string> keyValues)
-            {
-                var copy = keyValues.ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                copy.Remove("classname");
-
-                return copy;
-            }
-
-            mapFile.Worldspawn.Properties = CopyKeyValues(_bspEntities[0].KeyValues);
-
-            mapFile.Worldspawn.Children.AddRange(_bspEntities.Skip(1).Select(e => new MapEntity
-            {
-                ClassName = e.ClassName,
-                Properties = CopyKeyValues(e.KeyValues)
-            }));
+            MapFile mapFile = DecompilerUtils.CreateMapWithEntities(entitiesLump);
 
             List<DecompiledEntity> entities = new()
             {
@@ -301,12 +284,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 _logger.Information("converting brushes to map brushes");
             }
 
-            var origin = Vector3.Zero;
-
-            if (entity.Entity.Properties.TryGetValue("origin", out var value))
-            {
-                origin = Vector3Utils.ParseVector3(value);
-            }
+            var origin = entity.Entity.GetOrigin();
 
             foreach (var brush in brushlist)
             {

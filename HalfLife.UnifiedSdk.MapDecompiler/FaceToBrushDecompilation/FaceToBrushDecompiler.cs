@@ -24,7 +24,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         private readonly Surfedges _bspSurfedges;
         private readonly Edges _bspEdges;
         private readonly List<Vector3> _bspVertices;
-        private readonly Entities _bspEntities;
         private readonly Models _bspModels;
 
         private FaceToBrushDecompiler(ILogger logger, BspFile bspFile)
@@ -40,7 +39,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             _bspSurfedges = _bspFile.Surfedges;
             _bspEdges = _bspFile.Edges;
             _bspVertices = _bspFile.Vertices.Select(v => v.ToDouble()).ToList();
-            _bspEntities = _bspFile.Entities;
             _bspModels = _bspFile.Models;
         }
 
@@ -68,24 +66,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private MapFile DecompileCore(CancellationToken cancellationToken)
         {
-            MapFile mapFile = new();
-
-            static Dictionary<string, string> CopyKeyValues(Dictionary<string, string> keyValues)
-            {
-                var copy = keyValues.ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                copy.Remove("classname");
-
-                return copy;
-            }
-
-            mapFile.Worldspawn.Properties = CopyKeyValues(_bspEntities[0].KeyValues);
-
-            mapFile.Worldspawn.Children.AddRange(_bspEntities.Skip(1).Select(e => new MapEntity
-            {
-                ClassName = e.ClassName,
-                Properties = CopyKeyValues(e.KeyValues)
-            }));
+            MapFile mapFile = DecompilerUtils.CreateMapWithEntities(_bspFile.Entities);
 
             List<MapEntity> entities = new()
             {
@@ -113,12 +94,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private void CreateMapBrushes(MapEntity entity, int modelNumber)
         {
-            var origin = Vector3.Zero;
-
-            if (entity.Properties.TryGetValue("origin", out var value))
-            {
-                origin = Vector3Utils.ParseVector3(value);
-            }
+            var origin = entity.GetOrigin();
 
             var model = _bspModels[modelNumber];
 

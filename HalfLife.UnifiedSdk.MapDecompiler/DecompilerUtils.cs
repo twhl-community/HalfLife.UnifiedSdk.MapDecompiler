@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using Sledge.Formats.Bsp.Lumps;
 using Sledge.Formats.Map.Objects;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler
@@ -30,6 +31,30 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             }
 
             return modelNumber;
+        }
+
+        public static MapFile CreateMapWithEntities(Entities entities)
+        {
+            MapFile mapFile = new();
+
+            static Dictionary<string, string> CopyKeyValues(Dictionary<string, string> keyValues)
+            {
+                var copy = keyValues.ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                copy.Remove("classname");
+
+                return copy;
+            }
+
+            mapFile.Worldspawn.Properties = CopyKeyValues(entities[0].KeyValues);
+
+            mapFile.Worldspawn.Children.AddRange(entities.Skip(1).Select(e => new Entity
+            {
+                ClassName = e.ClassName,
+                Properties = CopyKeyValues(e.KeyValues)
+            }));
+
+            return mapFile;
         }
     }
 }
