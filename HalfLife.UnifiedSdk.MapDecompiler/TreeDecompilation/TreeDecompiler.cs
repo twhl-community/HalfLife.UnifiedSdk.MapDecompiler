@@ -256,38 +256,21 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             entities.AddRange(mapFile.Worldspawn.Children.Cast<MapEntity>().Select((e, i) => new DecompiledEntity(i + 1, e)));
 
-            _cancellationToken.ThrowIfCancellationRequested();
-
             foreach (var e in entities.Select((e, i) => new { Entity = e, Index = i }))
             {
+                _cancellationToken.ThrowIfCancellationRequested();
+
                 var entity = e.Entity;
 
-                int modelNumber = 0;
+                int? modelNumber = DecompilerUtils.TryFindAndRemoveModelNumber(_logger, entity.Entity, e.Index, _bspModels.Count);
 
-                if (entity.Entity.ClassName != "worldspawn")
+                if (modelNumber is not null)
                 {
-                    if (!entity.Entity.Properties.TryGetValue("model", out var model) || !model.StartsWith("*"))
-                    {
-                        continue;
-                    }
-
-                    _ = int.TryParse(model.AsSpan()[1..], out modelNumber);
-
-                    //don't write BSP model numbers
-                    entity.Entity.Properties.Remove("model");
+                    CreateMapBrushes(entity, modelNumber.Value);
                 }
-
-                if (modelNumber >= _bspModels.Count)
-                {
-                    _logger.Error("Entity {Index} ({ClassName}) has invalid model index {ModelNumber} (total {ModelCount} models)",
-                        e.Index, entity.Entity.ClassName, modelNumber, _bspModels.Count);
-                    continue;
-                }
-
-                CreateMapBrushes(entity, modelNumber);
-
-                _cancellationToken.ThrowIfCancellationRequested();
             }
+
+            _cancellationToken.ThrowIfCancellationRequested();
 
             _logger.Information("{Count} map brushes", _numMapBrushes);
             _logger.Information("{Count} clip brushes", _numClipBrushes);
