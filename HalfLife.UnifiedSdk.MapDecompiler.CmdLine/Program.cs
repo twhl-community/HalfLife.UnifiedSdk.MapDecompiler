@@ -103,11 +103,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 var jobs = uniqueFiles
                     .Select(f =>
                     {
-                        var job = new MapDecompilerJob(f, destinationDirectory)
-                        {
-                            // TODO: figure out a way to make Output non-null all the time.
-                            Output = string.Empty
-                        };
+                        var job = new MapDecompilerJob(f, destinationDirectory);
 
                         job.MessageReceived += (job, message) => job.Output += message;
 

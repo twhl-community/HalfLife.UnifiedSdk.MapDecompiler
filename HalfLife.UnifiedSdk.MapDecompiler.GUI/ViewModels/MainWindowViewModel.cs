@@ -198,11 +198,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         private static void LogMessage(MapDecompilerJob job, string message)
         {
             // This gets called from another thread so sync it.
-            Dispatcher.UIThread.Post(() =>
-            {
-                var output = job.Output ?? string.Empty;
-                job.Output = output + message;
-            });
+            Dispatcher.UIThread.Post(() => job.Output += message);
         }
 
         private void QueueJobs(List<MapDecompilerJob> jobs)
@@ -234,7 +230,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         private void QueueJobAgain(MapDecompilerJob job)
         {
-            job.Output = null;
+            job.Output = string.Empty;
             job.MessageReceived += LogMessage;
 
             QueueJobs(new() { job });

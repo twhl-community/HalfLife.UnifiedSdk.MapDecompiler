@@ -25,9 +25,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
             set => this.RaiseAndSetIfChanged(ref _status, value);
         }
 
-        private string? _output;
+        private string _output = string.Empty;
 
-        public string? Output
+        public string Output
         {
             get => _output;
             set => this.RaiseAndSetIfChanged(ref _output, value);

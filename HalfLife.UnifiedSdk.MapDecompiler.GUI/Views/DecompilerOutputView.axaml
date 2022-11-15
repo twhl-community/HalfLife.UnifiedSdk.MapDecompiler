@@ -5,8 +5,12 @@
 			 xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
 			 xmlns:ae="clr-namespace:AvaloniaEdit.Editing;assembly=AvaloniaEdit"
 			 xmlns:behaviors="using:HalfLife.UnifiedSdk.MapDecompiler.GUI.Behaviors"
+			 xmlns:converters="using:HalfLife.UnifiedSdk.MapDecompiler.GUI.Converters"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="HalfLife.UnifiedSdk.MapDecompiler.GUI.Views.DecompilerOutputView">
+	<UserControl.Resources>
+		<converters:JobTextConverter x:Key="JobTextConverter"/>
+	</UserControl.Resources>
 	<Grid RowDefinitions="*">
 		<TabControl SelectedIndex="{Binding LogIndex}">
 			<TabItem Header="Program Log">
@@ -23,7 +27,7 @@
 				<ScrollViewer>
 					<ae:TextArea Name="JobTextArea">
 						<i:Interaction.Behaviors>
-							<behaviors:DocumentTextBindingBehavior Text="{Binding CurrentJob.Output, Mode=OneWay, TargetNullValue='Waiting for job to start'}"/>
+							<behaviors:DocumentTextBindingBehavior Text="{Binding CurrentJob.Output, Mode=OneWay, Converter={StaticResource JobTextConverter}}"/>
 						</i:Interaction.Behaviors>
 					</ae:TextArea>
 				</ScrollViewer>
