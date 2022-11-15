@@ -344,8 +344,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 return null;
             }
 
-            const double BrushThickness = 1.0;
-
             var planeNormal = _bspPlanes[side.PlaneNumber].Normal;
 
             if (side.Side != 0)
@@ -410,7 +408,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 VAxis = frontFace.VAxis
             };
 
-            var normal = planeNormal * -BrushThickness;
+            var normal = planeNormal * -MapDecompilerConstants.FaceToBrushThickness;
 
             // Add front face vertices in reverse order to flip direction and offset to create thicker brush.
             backFace.Vertices.AddRange(frontVertices.Reverse().Select(v => (v + origin + normal).ToSingle()));
@@ -506,7 +504,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 // Generate 3 vertices on this face's plane.
                 foreach (ref readonly var sourceVertex in faceVertices)
                 {
-                    var vertex = sourceVertex * MapDecompilerConstants.OriginBrushSize;
+                    var vertex = sourceVertex * MapDecompilerConstants.OriginBrushHalfSize;
 
                     vertex = Vector3D.Transform(vertex, rotation);
 

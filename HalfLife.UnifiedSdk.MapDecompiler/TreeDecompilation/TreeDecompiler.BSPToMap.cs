@@ -417,8 +417,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
         private void AddOriginBrush(DecompiledEntity entity, Vector3 origin)
         {
-            var min = origin + (Vector3.One * -MapDecompilerConstants.OriginBrushSize);
-            var max = origin + (Vector3.One * MapDecompilerConstants.OriginBrushSize);
+            var min = origin + (Vector3.One * -MapDecompilerConstants.OriginBrushHalfSize);
+            var max = origin + (Vector3.One * MapDecompilerConstants.OriginBrushHalfSize);
 
             var brush = BrushFromBounds(min, max);
 
