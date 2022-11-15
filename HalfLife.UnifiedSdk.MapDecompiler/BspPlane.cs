@@ -21,7 +21,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             Vector3Utils.RoundNormal(ref normal);
             Normal = normal;
             Distance = plane.Distance;
-            Type = plane.Type;
+            // Calculate correct plane type (in case normal was rounded).
+            Type = Vector3Utils.PlaneTypeForNormal(normal);
         }
     }
 }

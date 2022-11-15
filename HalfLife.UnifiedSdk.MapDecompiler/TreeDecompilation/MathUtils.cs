@@ -78,27 +78,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 && Math.Abs(p.Distance - dist) < DistEpsilon;
         }
 
-        public static PlaneType PlaneTypeForNormal(Vector3 normal)
-        {
-            // NOTE: should these have an epsilon around 1.0?		
-            if (normal.X == 1.0 || normal.X == -1.0)
-                return PlaneType.X;
-            if (normal.Y == 1.0 || normal.Y == -1.0)
-                return PlaneType.Y;
-            if (normal.Z == 1.0 || normal.Z == -1.0)
-                return PlaneType.Z;
-
-            var ax = Math.Abs(normal.X);
-            var ay = Math.Abs(normal.Y);
-            var az = Math.Abs(normal.Z);
-
-            if (ax >= ay && ax >= az)
-                return PlaneType.AnyX;
-            if (ay >= ax && ay >= az)
-                return PlaneType.AnyY;
-            return PlaneType.AnyZ;
-        }
-
         public static PlaneSide BrushMostlyOnSide(BspBrush brush, BspPlane plane)
         {
             double max = 0;

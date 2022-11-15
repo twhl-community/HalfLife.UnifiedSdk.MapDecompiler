@@ -335,7 +335,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 Normal = normal,
                 Distance = dist,
-                Type = MathUtils.PlaneTypeForNormal(normal)
+                Type = Vector3Utils.PlaneTypeForNormal(normal)
             };
 
             _bspPlanes.Add(p);
