@@ -22,10 +22,16 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
                 //don't write BSP model numbers
                 entity.Properties.Remove("model");
             }
+            else if (entityIndex != 0)
+            {
+                logger.Warning("Entity {Index} has class worldspawn which is not allowed (entity 0 must be the only worldspawn entity), ignoring",
+                    entityIndex);
+                return null;
+            }
 
             if (modelNumber < 0 || modelNumber >= bspModelsCount)
             {
-                logger.Error("Entity {Index} ({ClassName}) has invalid model index {ModelNumber} (total {ModelCount} models)",
+                logger.Warning("Entity {Index} ({ClassName}) has invalid model index {ModelNumber} (total {ModelCount} models)",
                     entityIndex, entity.ClassName, modelNumber, bspModelsCount);
                 return null;
             }
