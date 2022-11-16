@@ -1140,7 +1140,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 {
                     var texInfoIndex = _textureNameMap.FirstOrDefault(t => TextureUtils.TextureContents(t.Value) == brush.Side);
 
-                    if (texInfoIndex.Value.Length > 0)
+                    if (texInfoIndex.Value is not null && texInfoIndex.Value.Length > 0)
                     {
                         texinfonum = texInfoIndex.Key;
                     }
