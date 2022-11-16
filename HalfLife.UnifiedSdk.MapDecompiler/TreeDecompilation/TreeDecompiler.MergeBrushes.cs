@@ -252,13 +252,13 @@
             //check for out of bound brushes
             bool CheckBounds(int i, double min, double max)
             {
-                if (min < -MaxMapBounds || max > MaxMapBounds)
+                if (min < -Winding.BogusRange || max > Winding.BogusRange)
                 {
                     _logger.Information("brush: bounds out of range");
                     _logger.Information("ob.Mins[{Index}] = {Min}, obMaxs[{Index2}] = {Max}", i, min, i, max);
                     return false;
                 }
-                if (min > MaxMapBounds || max < -MaxMapBounds)
+                if (min > Winding.BogusRange || max < -Winding.BogusRange)
                 {
                     _logger.Information("brush: no visible sides on brush");
                     _logger.Information("ob.Mins[{Index}] = {Min}, ob.Maxs[{Index2}] = {Max}", i, min, i, max);

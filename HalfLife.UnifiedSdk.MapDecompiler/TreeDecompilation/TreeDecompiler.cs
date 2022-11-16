@@ -14,8 +14,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
     internal sealed partial class TreeDecompiler
     {
         private const int PlaneHashes = 1024;
-        private const int MaxRange = 4096;
-        private const int MaxMapBounds = 65535;
 
         private const int TexInfoNode = -1; //side is allready on a node
 
@@ -493,9 +491,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 MathUtils.BoundBrush(b);
 
-                bool isBogus = b.Mins.X < -MaxMapBounds || b.Maxs.X > MaxMapBounds
-                    || b.Mins.Y < -MaxMapBounds || b.Maxs.Y > MaxMapBounds
-                    || b.Mins.Z < -MaxMapBounds || b.Maxs.Z > MaxMapBounds;
+                bool isBogus = b.Mins.X < -Winding.BogusRange || b.Maxs.X > Winding.BogusRange
+                    || b.Mins.Y < -Winding.BogusRange || b.Maxs.Y > Winding.BogusRange
+                    || b.Mins.Z < -Winding.BogusRange || b.Maxs.Z > Winding.BogusRange;
 
                 if (isBogus)
                 {
@@ -701,9 +699,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 MathUtils.BoundBrush(b);
 
-                bool isBogus = b.Mins.X < -MaxRange || b.Maxs.X > MaxRange
-                    || b.Mins.Y < -MaxRange || b.Maxs.Y > MaxRange
-                    || b.Mins.Z < -MaxRange || b.Maxs.Z > MaxRange;
+                bool isBogus = b.Mins.X < -Winding.BogusRange || b.Maxs.X > Winding.BogusRange
+                    || b.Mins.Y < -Winding.BogusRange || b.Maxs.Y > Winding.BogusRange
+                    || b.Mins.Z < -Winding.BogusRange || b.Maxs.Z > Winding.BogusRange;
 
                 if (isBogus)
                 {

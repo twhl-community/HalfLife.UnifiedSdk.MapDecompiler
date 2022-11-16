@@ -119,13 +119,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             bool CheckBounds(double min, double max)
             {
-                if (min < -MaxMapBounds || max > MaxMapBounds)
+                if (min < -Winding.BogusRange || max > Winding.BogusRange)
                 {
                     _logger.Information("entity {EntityIndex}, brush {BrushIndex}: bounds out of range", entity.Index, ob.Index);
                     return false;
                 }
 
-                if (min > MaxMapBounds || max < -MaxMapBounds)
+                if (min > Winding.BogusRange || max < -Winding.BogusRange)
                 {
                     _logger.Information("entity {EntityIndex}, brush {BrushIndex}: no visible sides on brush", entity.Index, ob.Index);
                     return false;

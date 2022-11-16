@@ -2,7 +2,11 @@
 {
     internal sealed class Winding : ICloneable
     {
-        private const int BogusRange = 65535;
+        /// <summary>
+        /// This value should be larger than the maximum extent for supported engines.
+        /// Half-Life's is 4096 but maps can be up to 16384, Sven Co-op's is 131072.
+        /// </summary>
+        public const int BogusRange = 1 << 20;
 
         /// <summary>
         /// somewhere outside the map
