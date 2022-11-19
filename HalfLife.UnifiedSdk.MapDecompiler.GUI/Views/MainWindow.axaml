@@ -37,8 +37,9 @@
 			<dec:DecompilerOptionsView Grid.Column="0" Grid.Row="0"
 									   DataContext="{Binding DecompilerOptions}"/>
 
-			<StackPanel Grid.Column="0" Grid.Row="1" VerticalAlignment="Bottom">
+			<StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Bottom">
 				<Button Content="Cancel All" Command="{Binding CancelAllCommand}"/>
+				<Button Content="Decompile All Again" Command="{Binding DecompileAllAgainCommand}"/>
 			</StackPanel>
 			
 			<SelectableTextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap">

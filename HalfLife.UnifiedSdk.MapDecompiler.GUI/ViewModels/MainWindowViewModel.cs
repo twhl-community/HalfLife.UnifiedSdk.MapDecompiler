@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Collections.Specialized;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 {
@@ -42,6 +43,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         public Interaction<CancelAllJobsDialogViewModel, bool> ShowCancelAllJobsDialog { get; } = new();
 
         public bool CanCancelAllJobs => !_jobTask.IsCompleted;
+
+        public ICommand DecompileAllAgainCommand { get; }
+
+        public bool CanDecompileAllJobsAgain => _jobTask.IsCompleted;
 
         public ObservableCollection<MapDecompilerJob> Files { get; } = new();
 
@@ -162,6 +167,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
             CancelAllCommand = ReactiveCommand.Create(async () => await CancelAllJobs(), this.WhenAnyValue(x => x.CanCancelAllJobs));
 
+            DecompileAllAgainCommand = ReactiveCommand.Create(() => QueueAllJobsAgain(), this.WhenAnyValue(x => x.CanDecompileAllJobsAgain, x => x.Files.Count,
+                (canDecompile, filesCount) => canDecompile && filesCount > 0));
+
             DeleteCommand = ReactiveCommand.Create(
                 () => Files.Remove(CurrentJob!),
                 this.WhenAnyValue(x => x.CanExecuteDelete));
@@ -226,14 +234,32 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 scheduler: TaskScheduler.Default);
 
             this.RaisePropertyChanged(nameof(CanCancelAllJobs));
+            this.RaisePropertyChanged(nameof(CanDecompileAllJobsAgain));
+        }
+
+        private static void ResetJob(MapDecompilerJob job)
+        {
+            job.Output = string.Empty;
+            job.MessageReceived += LogMessage;
+            job.Status = MapDecompilerJobStatus.Waiting;
         }
 
         private void QueueJobAgain(MapDecompilerJob job)
         {
-            job.Output = string.Empty;
-            job.MessageReceived += LogMessage;
-
+            ResetJob(job);
             QueueJobs(new() { job });
+        }
+
+        private void QueueAllJobsAgain()
+        {
+            Debug.Assert(_jobTask.IsCompleted);
+
+            foreach (var job in Files)
+            {
+                ResetJob(job);
+            }
+
+            QueueJobs(Files.ToList());
         }
 
         private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerStrategy decompilerStrategy,
@@ -307,6 +333,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 {
                     _programLogger.Information("Total time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", timeElapsed);
                     this.RaisePropertyChanged(nameof(CanCancelAllJobs));
+                    this.RaisePropertyChanged(nameof(CanDecompileAllJobsAgain));
                 });
                 _programStopwatch.Stop();
             }
