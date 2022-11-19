@@ -72,8 +72,8 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Views\CancelJobsDialog.axaml.cs">
-      <DependentUpon>CancelJobsDialog.axaml</DependentUpon>
+    <Compile Update="Views\CancelAllJobsDialog.axaml.cs">
+      <DependentUpon>CancelAllJobsDialog.axaml</DependentUpon>
     </Compile>
     <Compile Update="Views\DecompilerOutputView.axaml.cs">
       <DependentUpon>DecompilerOutputView.axaml</DependentUpon>

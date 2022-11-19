@@ -5,9 +5,9 @@ using System;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 {
-    public partial class CancelJobsDialog : ReactiveWindow<CancelJobsDialogViewModel>
+    public partial class CancelAllJobsDialog : ReactiveWindow<CancelAllJobsDialogViewModel>
     {
-        public CancelJobsDialog()
+        public CancelAllJobsDialog()
         {
             InitializeComponent();
 

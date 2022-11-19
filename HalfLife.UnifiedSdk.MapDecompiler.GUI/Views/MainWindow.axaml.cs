@@ -31,7 +31,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
                 d(ViewModel!.ShowConvertFilesDialog.RegisterHandler(DoShowOpenFileDialogAsync));
                 d(ViewModel!.QuitApplication.RegisterHandler(DoQuitApplication));
-                d(ViewModel!.ShowCancelJobsDialog.RegisterHandler(DoShowCancelJobsDialogAsync));
+                d(ViewModel!.ShowCancelAllJobsDialog.RegisterHandler(DoShowCancelAllJobsDialogAsync));
                 d(ViewModel!.DecompilerOptions.ShowBrowseDirectoryDialog.RegisterHandler(DoShowOpenDirectoryDialogAsync));
             });
         }
@@ -108,9 +108,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
             interaction.SetOutput(result);
         }
 
-        private async Task DoShowCancelJobsDialogAsync(InteractionContext<CancelJobsDialogViewModel, bool> interaction)
+        private async Task DoShowCancelAllJobsDialogAsync(InteractionContext<CancelAllJobsDialogViewModel, bool> interaction)
         {
-            var dialog = new CancelJobsDialog
+            var dialog = new CancelAllJobsDialog
             {
                 DataContext = interaction.Input
             };

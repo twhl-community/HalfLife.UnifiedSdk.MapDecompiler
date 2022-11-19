@@ -37,11 +37,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public Interaction<Unit, Unit> QuitApplication { get; } = new();
 
-        public ICommand CancelCommand { get; }
+        public ICommand CancelAllCommand { get; }
 
-        public Interaction<CancelJobsDialogViewModel, bool> ShowCancelJobsDialog { get; } = new();
+        public Interaction<CancelAllJobsDialogViewModel, bool> ShowCancelAllJobsDialog { get; } = new();
 
-        public bool CanCancelJobs => !_jobTask.IsCompleted;
+        public bool CanCancelAllJobs => !_jobTask.IsCompleted;
 
         public ObservableCollection<MapDecompilerJob> Files { get; } = new();
 
@@ -160,7 +160,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
             QuitCommand = ReactiveCommand.Create(async () => await QuitApplication.Handle(new()));
 
-            CancelCommand = ReactiveCommand.Create(async () => await CancelJobs(), this.WhenAnyValue(x => x.CanCancelJobs));
+            CancelAllCommand = ReactiveCommand.Create(async () => await CancelAllJobs(), this.WhenAnyValue(x => x.CanCancelAllJobs));
 
             DeleteCommand = ReactiveCommand.Create(
                 () => Files.Remove(CurrentJob!),
@@ -178,17 +178,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 return true;
             }
 
-            return await ShowCancelJobsDialog.Handle(new());
+            return await ShowCancelAllJobsDialog.Handle(new());
         }
 
         public async Task OnClosing()
         {
-            await CancelJobs();
+            await CancelAllJobs();
         }
 
-        public async Task CancelJobs()
+        public async Task CancelAllJobs()
         {
-            _programLogger.Information("Cancelling jobs");
+            _programLogger.Information("Cancelling all jobs");
             _jobCancellationTokenSource.Cancel();
             await _jobTask;
             _jobTask = Task.CompletedTask;
@@ -225,7 +225,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 continuationOptions: TaskContinuationOptions.LongRunning,
                 scheduler: TaskScheduler.Default);
 
-            this.RaisePropertyChanged(nameof(CanCancelJobs));
+            this.RaisePropertyChanged(nameof(CanCancelAllJobs));
         }
 
         private void QueueJobAgain(MapDecompilerJob job)
@@ -306,7 +306,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 Dispatcher.UIThread.Post(() =>
                 {
                     _programLogger.Information("Total time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", timeElapsed);
-                    this.RaisePropertyChanged(nameof(CanCancelJobs));
+                    this.RaisePropertyChanged(nameof(CanCancelAllJobs));
                 });
                 _programStopwatch.Stop();
             }

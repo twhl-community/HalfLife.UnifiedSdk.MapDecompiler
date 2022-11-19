@@ -38,7 +38,7 @@
 									   DataContext="{Binding DecompilerOptions}"/>
 
 			<StackPanel Grid.Column="0" Grid.Row="1" VerticalAlignment="Bottom">
-				<Button Content="Cancel" Command="{Binding CancelCommand}"/>
+				<Button Content="Cancel All" Command="{Binding CancelAllCommand}"/>
 			</StackPanel>
 			
 			<SelectableTextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap">
