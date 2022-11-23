@@ -11,7 +11,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/SamVanheer/HalfLife.UnifiedSdk.MapDecompiler</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <AssemblyVersion>0.6.0.0</AssemblyVersion>
     <PackageLicenseExpression>GPL-2.0-only</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
