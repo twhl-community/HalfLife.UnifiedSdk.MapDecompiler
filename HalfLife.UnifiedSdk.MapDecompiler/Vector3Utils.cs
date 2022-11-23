@@ -1,4 +1,5 @@
 ﻿using Sledge.Formats.Bsp.Objects;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler
@@ -52,7 +53,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
             for (int i = 0; i < 3 && i < components.Length; ++i)
             {
-                _ = double.TryParse(components[i], out componentValues[i]);
+                _ = double.TryParse(components[i],
+                    NumberStyles.Float | NumberStyles.AllowThousands, NumberFormatInfo.InvariantInfo,
+                    out componentValues[i]);
             }
 
             return new(componentValues[0], componentValues[1], componentValues[2]);
