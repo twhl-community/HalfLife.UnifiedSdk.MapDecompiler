@@ -45,35 +45,21 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         {
             BspBrush brush = new();
 
-            brush.Sides.Add(new BspSide
+            BspSide MakeSide(Vector3 normal, double dist)
             {
-                PlaneNumber = FindFloatPlane(Vector3.UnitX, maxs.X)
-            });
+                return new BspSide
+                {
+                    PlaneNumber = FindFloatPlane(normal, dist),
+                    Surface = -1 // This side was not created by a node and should not be considered for texturing.
+                };
+            }
 
-            brush.Sides.Add(new BspSide
-            {
-                PlaneNumber = FindFloatPlane(Vector3.UnitY, maxs.Y)
-            });
-
-            brush.Sides.Add(new BspSide
-            {
-                PlaneNumber = FindFloatPlane(Vector3.UnitZ, maxs.Z)
-            });
-
-            brush.Sides.Add(new BspSide
-            {
-                PlaneNumber = FindFloatPlane(-Vector3.UnitX, -mins.X)
-            });
-
-            brush.Sides.Add(new BspSide
-            {
-                PlaneNumber = FindFloatPlane(-Vector3.UnitY, -mins.Y)
-            });
-
-            brush.Sides.Add(new BspSide
-            {
-                PlaneNumber = FindFloatPlane(-Vector3.UnitZ, -mins.Z)
-            });
+            brush.Sides.Add(MakeSide(Vector3.UnitX, maxs.X));
+            brush.Sides.Add(MakeSide(Vector3.UnitY, maxs.Y));
+            brush.Sides.Add(MakeSide(Vector3.UnitZ, maxs.Z));
+            brush.Sides.Add(MakeSide(-Vector3.UnitX, -mins.X));
+            brush.Sides.Add(MakeSide(-Vector3.UnitY, -mins.Y));
+            brush.Sides.Add(MakeSide(-Vector3.UnitZ, -mins.Z));
 
             CreateBrushWindings(brush);
 

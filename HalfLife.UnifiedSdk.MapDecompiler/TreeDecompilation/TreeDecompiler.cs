@@ -888,84 +888,88 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     //if optimizing the texture placement and not going for the
                     //least number of brushes
 
-                    if (_options.BrushOptimization == BrushOptimization.BestTextureMatch)
+                    if (sidenodenum != -1)
                     {
-                        int i;
-                        for (i = 0; i < model.NumFaces; ++i)
+                        if (_options.BrushOptimization == BrushOptimization.BestTextureMatch)
                         {
-                            var faceIndex = model.FirstFace + i;
-                            var face = _bspFaces[faceIndex];
-
-                            //the face must be in the same plane as the node plane that created
-                            //this brush side
-                            if (face.Plane == _bspNodes[sidenodenum].Plane)
+                            int i;
+                            for (i = 0; i < model.NumFaces; ++i)
                             {
-                                //get the area the face and the brush side overlap
-                                var area = FaceOnWinding(face, side.Winding);
-                                //if this face overlaps the brush side winding more than previous faces
-                                if (area > largestarea)
-                                {
-                                    //if there already was a face for texturing this brush side with
-                                    //a different texture
-                                    if (bestfacenum >= 0 &&
-                                            (_bspFaces[bestfacenum].TextureInfo != face.TextureInfo))
-                                    {
-                                        //split the brush to fit the texture
-                                        var newbrushes = SplitBrushWithFace(brush!, face);
-                                        //if new brushes where created
-                                        if (newbrushes is not null)
-                                        {
-                                            //remove the current brush from the list
-                                            brushlist.RemoveAt(brushIndex);
+                                var faceIndex = model.FirstFace + i;
+                                var face = _bspFaces[faceIndex];
 
-                                            //add the new brushes to the end of the list
-                                            brushlist.AddRange(newbrushes);
-                                            //don't forget about the prevbrush reference at the bottom of
-                                            //the outer loop
-                                            brush = prevbrush;
-                                            break;
+                                //the face must be in the same plane as the node plane that created
+                                //this brush side
+                                if (face.Plane == _bspNodes[sidenodenum].Plane)
+                                {
+                                    //get the area the face and the brush side overlap
+                                    var area = FaceOnWinding(face, side.Winding);
+                                    //if this face overlaps the brush side winding more than previous faces
+                                    if (area > largestarea)
+                                    {
+                                        //if there already was a face for texturing this brush side with
+                                        //a different texture
+                                        if (bestfacenum >= 0 &&
+                                                (_bspFaces[bestfacenum].TextureInfo != face.TextureInfo))
+                                        {
+                                            //split the brush to fit the texture
+                                            var newbrushes = SplitBrushWithFace(brush!, face);
+                                            //if new brushes where created
+                                            if (newbrushes is not null)
+                                            {
+                                                //remove the current brush from the list
+                                                brushlist.RemoveAt(brushIndex);
+
+                                                //add the new brushes to the end of the list
+                                                brushlist.AddRange(newbrushes);
+                                                //don't forget about the prevbrush reference at the bottom of
+                                                //the outer loop
+                                                brush = prevbrush;
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                _logger.Verbose("brush {Count}: no real texture split", brushIndex);
+                                            }
                                         }
                                         else
                                         {
-                                            _logger.Verbose("brush {Count}: no real texture split", brushIndex);
+                                            //best face for texturing this brush side
+                                            bestfacenum = faceIndex;
                                         }
                                     }
-                                    else
+                                }
+                            }
+                            //if the brush was split the original brush is removed
+                            //and we just continue with the next one in the list
+                            if (i < model.NumFaces) break;
+                        }
+                        else
+                        {
+                            //find the face with the largest overlap with this brush side
+                            //for texturing the brush side
+                            for (int i = 0; i < model.NumFaces; ++i)
+                            {
+                                var faceIndex = model.FirstFace + i;
+                                var face = _bspFaces[faceIndex];
+
+                                //the face must be in the same plane as the node plane that created
+                                //this brush side
+                                if (face.Plane == _bspNodes[sidenodenum].Plane)
+                                {
+                                    //get the area the face and the brush side overlap
+                                    var area = FaceOnWinding(face, side.Winding);
+                                    //if this face overlaps the brush side winding more than previous faces
+                                    if (area > largestarea)
                                     {
-                                        //best face for texturing this brush side
+                                        largestarea = area;
                                         bestfacenum = faceIndex;
                                     }
                                 }
                             }
                         }
-                        //if the brush was split the original brush is removed
-                        //and we just continue with the next one in the list
-                        if (i < model.NumFaces) break;
                     }
-                    else
-                    {
-                        //find the face with the largest overlap with this brush side
-                        //for texturing the brush side
-                        for (int i = 0; i < model.NumFaces; ++i)
-                        {
-                            var faceIndex = model.FirstFace + i;
-                            var face = _bspFaces[faceIndex];
 
-                            //the face must be in the same plane as the node plane that created
-                            //this brush side
-                            if (face.Plane == _bspNodes[sidenodenum].Plane)
-                            {
-                                //get the area the face and the brush side overlap
-                                var area = FaceOnWinding(face, side.Winding);
-                                //if this face overlaps the brush side winding more than previous faces
-                                if (area > largestarea)
-                                {
-                                    largestarea = area;
-                                    bestfacenum = faceIndex;
-                                }
-                            }
-                        }
-                    }
                     //if a face was found for texturing this brush side
                     if (bestfacenum >= 0)
                     {
