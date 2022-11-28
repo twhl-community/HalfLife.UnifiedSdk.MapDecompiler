@@ -98,6 +98,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     case Contents.Clip:
                     case Contents.Sky:
                     case Contents.Translucent:
+                    case Contents.Null:
                         {
                             brush.Side = Contents.Solid;
                             return new List<BspBrush> { brush };
