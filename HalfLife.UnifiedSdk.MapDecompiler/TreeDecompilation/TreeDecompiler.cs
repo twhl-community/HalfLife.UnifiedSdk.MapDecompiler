@@ -1026,6 +1026,22 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 plane.Distance = -plane.Distance;
             }
 
+            // Check whether the face is actually on the winding at all.
+            // Some faces are on planes that are parallel to the winding plane but are nowhere near it,
+            // usually windings that have no texture like map exteriors.
+            {
+                var normal = Vector3D.Cross(winding.Points[0] - winding.Points[1], winding.Points[2] - winding.Points[1]);
+                normal = Vector3D.Normalize(normal);
+                var dist = Vector3D.Dot(normal, winding.Points[0]);
+
+                int planenum = FindFloatPlane(normal, dist);
+
+                if (face.Plane != planenum)
+                {
+                    return 0;
+                }
+            }
+
             for (int i = 0; i < face.NumEdges && w is not null; ++i)
             {
                 //get the first and second vertex of the edge
