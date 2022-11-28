@@ -28,10 +28,14 @@
 
         <Grid Grid.Column="0" Grid.Row="1"
               ColumnDefinitions="Auto"
-              RowDefinitions="Auto">
+              RowDefinitions="Auto, Auto">
             <CheckBox Grid.Row="0"
                       Content="Generate WAD file if the map contains embedded textures"
                       IsChecked="{Binding Settings.GenerateWadFile}"/>
+
+            <CheckBox Grid.Row="1"
+                      Content="Apply NULL to generated faces"
+                      IsChecked="{Binding Settings.ApplyNullToGeneratedFaces}"/>
         </Grid>
         
         <Label Grid.Column="0" Grid.Row="2"

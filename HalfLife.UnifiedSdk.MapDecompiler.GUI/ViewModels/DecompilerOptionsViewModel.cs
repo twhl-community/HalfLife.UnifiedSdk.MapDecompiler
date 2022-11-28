@@ -33,6 +33,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
         public DecompilerOptions ToOptions()
         {
             return new(
+                ApplyNullToGeneratedFaces: Settings.ApplyNullToGeneratedFaces,
                 MergeBrushes: Settings.MergeBrushes,
                 IncludeLiquids: Settings.IncludeLiquids,
                 BrushOptimization: Settings.BrushOptimization

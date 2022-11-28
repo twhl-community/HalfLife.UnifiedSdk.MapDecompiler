@@ -44,6 +44,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private int _numClipBrushes;
 
         private readonly int _originTextureIndex;
+        private readonly int _nullTextureIndex;
+        private readonly int _nullTextureInfo;
 
         private TreeDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
@@ -151,6 +153,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             // Add some tool textures.
             _originTextureIndex = FindOrCreateTexture("ORIGIN");
+            _nullTextureIndex = FindOrCreateTexture("NULL");
+
+            // Use a dummy texture info entry for generated faces. Will be largely ignored and set to sensible values.
+            _nullTextureInfo = _bspTexInfo.Count;
+
+            _bspTexInfo.Add(new()
+            {
+                MipTexture = _nullTextureIndex,
+            });
 
             // Cache the texture name lookup map
             _textureNameMap = _bspTexInfo
@@ -203,6 +214,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             var entitiesLump = _bspFile.Entities;
 
             Debug.Assert(entitiesLump[0].ClassName == "worldspawn");
+
+            DecompilerUtils.PrintSharedOptions(_logger, _options);
 
             if (_options.MergeBrushes)
             {

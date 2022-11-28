@@ -7,6 +7,7 @@
     /// <param name="IncludeLiquids"></param>
     /// <param name="BrushOptimization"></param>
     public sealed record DecompilerOptions(
+        bool ApplyNullToGeneratedFaces = false,
         bool MergeBrushes = false,
         bool IncludeLiquids = false,
         BrushOptimization BrushOptimization = BrushOptimization.BestTextureMatch);

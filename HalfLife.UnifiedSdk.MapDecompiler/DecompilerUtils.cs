@@ -6,6 +6,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 {
     internal static class DecompilerUtils
     {
+        public static void PrintSharedOptions(ILogger logger, DecompilerOptions options)
+        {
+            if (options.ApplyNullToGeneratedFaces)
+            {
+                logger.Information("Applying NULL to generated faces");
+            }
+        }
+
         public static int? TryFindAndRemoveModelNumber(ILogger logger, Entity entity, int entityIndex, int bspModelsCount)
         {
             int modelNumber = 0;

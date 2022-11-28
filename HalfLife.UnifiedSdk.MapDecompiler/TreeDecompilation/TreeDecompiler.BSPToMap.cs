@@ -38,7 +38,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             {
                 if (side.TextureInfo == TexInfoNode)
                 {
-                    side.TextureInfo = besttexinfo;
+                    side.TextureInfo = _options.ApplyNullToGeneratedFaces ? _nullTextureInfo : besttexinfo;
                 }
             }
 

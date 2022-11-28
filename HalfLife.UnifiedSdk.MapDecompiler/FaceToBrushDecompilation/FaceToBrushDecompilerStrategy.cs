@@ -10,7 +10,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         public override MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
-            return FaceToBrushDecompiler.Decompile(logger, bspFile, cancellationToken);
+            return FaceToBrushDecompiler.Decompile(logger, bspFile, options, cancellationToken);
         }
     }
 }

@@ -71,6 +71,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             set => this.RaiseAndSetIfChanged(ref _generateWadFile, value);
         }
 
+        private bool _applyNullToGeneratedFaces = false;
+
+        [DataMember]
+        public bool ApplyNullToGeneratedFaces
+        {
+            get => _applyNullToGeneratedFaces;
+            set => this.RaiseAndSetIfChanged(ref _applyNullToGeneratedFaces, value);
+        }
+
         private string _decompilerStrategy = DecompilerStrategies.Strategies[0].Name;
 
         [DataMember]

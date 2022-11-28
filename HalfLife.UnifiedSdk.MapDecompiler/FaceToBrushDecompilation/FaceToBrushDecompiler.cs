@@ -16,6 +16,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
     {
         private readonly ILogger _logger;
         private readonly BspFile _bspFile;
+        private readonly DecompilerOptions _options;
 
         private readonly List<BspPlane> _bspPlanes;
         private readonly Faces _bspFaces;
@@ -26,10 +27,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         private readonly List<Vector3> _bspVertices;
         private readonly Models _bspModels;
 
-        private FaceToBrushDecompiler(ILogger logger, BspFile bspFile)
+        private FaceToBrushDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options)
         {
             _logger = logger;
             _bspFile = bspFile;
+            _options = options;
 
             // Cache lumps to avoid lookup overhead.
             _bspPlanes = _bspFile.Planes.Select(p => new BspPlane(p)).ToList();
@@ -42,10 +44,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             _bspModels = _bspFile.Models;
         }
 
-        public static MapFile Decompile(ILogger logger, BspFile bspFile, CancellationToken cancellationToken)
+        public static MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(bspFile);
+            ArgumentNullException.ThrowIfNull(options);
 
             if (bspFile.Version != BspVersion.Goldsource)
             {
@@ -57,7 +60,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 throw new ArgumentException("BSP has no entities", nameof(bspFile));
             }
 
-            var decompiler = new FaceToBrushDecompiler(logger, bspFile);
+            var decompiler = new FaceToBrushDecompiler(logger, bspFile, options);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -66,6 +69,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private MapFile DecompileCore(CancellationToken cancellationToken)
         {
+            DecompilerUtils.PrintSharedOptions(_logger, _options);
+
             MapFile mapFile = DecompilerUtils.CreateMapWithEntities(_bspFile.Entities);
 
             List<MapEntity> entities = new()
@@ -397,7 +402,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             // Create back face from front face.
             MapFace backFace = new()
             {
-                TextureName = frontFace.TextureName,
+                TextureName = _options.ApplyNullToGeneratedFaces ? "NULL" : frontFace.TextureName,
                 //the scaling of the texture
                 XScale = frontFace.XScale,
                 YScale = frontFace.YScale,
@@ -432,8 +437,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
                 MapFace sideFace = new()
                 {
-                    // TODO: add option to use NULL here.
-                    TextureName = texture.Name,
+                    TextureName = _options.ApplyNullToGeneratedFaces ? "NULL" : texture.Name,
                     // Use default values for most of this. No meaningful value can be assigned from the BSP data.
                     XScale = 1,
                     YScale = 1,
