@@ -308,6 +308,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 AddOriginBrush(entity, origin);
             }
 
+            if (entity.Entity.ClassName == "trigger_teleport" && origin == Vector3.Zero)
+            {
+                AddOriginBrush(entity, origin);
+            }
+
             if (modelNumber == 0)
             {
                 _logger.Information("{Count} brushes", brushlist.Count);

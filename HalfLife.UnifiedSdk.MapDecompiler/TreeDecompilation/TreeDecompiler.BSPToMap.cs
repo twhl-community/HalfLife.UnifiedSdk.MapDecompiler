@@ -27,10 +27,13 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             if (besttexinfo == TexInfoNode)
             {
-                // TODO: maybe add a clip texture to it and keep the brush
-                brush.Sides.Clear();
-                ++_numClipBrushes;
-                return;
+                // Allow textureless brushes to exist if the entity is a trigger or a func_nogrenades
+                if (!entity.Entity.ClassName.StartsWith("trigger_") && !entity.Entity.ClassName.StartsWith("func_nogrenades")) {
+                    // TODO: maybe add a clip texture to it and keep the brush
+                    brush.Sides.Clear();
+                    ++_numClipBrushes;
+                    return;
+                }
             }
 
             //set the texinfo for all the brush sides without texture
@@ -67,7 +70,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 
             var mapbrush = BSPBrushToMap(decompiledBrush.Brush, origin);
 
-            entity.Entity.Children.Add(mapbrush);
+            // If this mapbrush was linked to a trigger in goldsrc,
+            // make sure to give it the trigger texture!!
+            if (entity.Entity.ClassName.StartsWith("trigger_") || entity.Entity.ClassName.StartsWith("func_nogrenades"))
+            {
+                foreach (var face in mapbrush.Faces)
+                {
+                    face.TextureName = "tools/toolstrigger";
+                }
+            }
+
+             entity.Entity.Children.Add(mapbrush);
         }
 
         /// <summary>
