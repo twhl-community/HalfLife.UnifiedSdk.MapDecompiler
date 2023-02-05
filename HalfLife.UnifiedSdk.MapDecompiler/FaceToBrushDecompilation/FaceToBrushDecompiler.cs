@@ -120,7 +120,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 }
             }
 
-            if (origin != Vector3.Zero)
+            if (_options.AlwaysGenerateOriginBrushes || origin != Vector3.Zero)
             {
                 entity.Children.Add(CreateOriginBrush(origin));
                 ++brushCount;

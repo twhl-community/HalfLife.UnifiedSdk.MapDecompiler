@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using Avalonia.Themes.Fluent;
+using Avalonia.Threading;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
 using ReactiveUI;
 using System.ComponentModel;
@@ -13,7 +14,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 {
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
-        private bool _loadedSettings;
+        private bool _performedInitialLayout;
 
         public MainWindow()
         {
@@ -21,12 +22,19 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
             this.WhenActivated(d =>
             {
-                // Load settings now so initial layout is done.
-                // This is necessary so the decompiler options view is sized according to the first tab, which is the largest of the two.
-                if (!_loadedSettings)
+                if (!_performedInitialLayout)
                 {
-                    _loadedSettings = true;
-                    Settings.Default.Load();
+                    _performedInitialLayout = true;
+
+                    // This is necessary so the decompiler options view is sized according to the first tab,
+                    // which is the largest of the two.
+                    // On startup we switch to the first tab and then delay switching to the remembered tab
+                    // until after the initial layout has been performed.
+                    var selectedStrategy = Settings.Default.DecompilerStrategy;
+
+                    Settings.Default.DecompilerStrategy = DecompilerStrategies.Strategies[0].Name;
+
+                    Dispatcher.UIThread.Post(() => Settings.Default.DecompilerStrategy = selectedStrategy);
                 }
 
                 d(ViewModel!.ShowConvertFilesDialog.RegisterHandler(DoShowOpenFileDialogAsync));

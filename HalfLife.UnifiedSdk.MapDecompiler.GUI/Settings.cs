@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 
@@ -80,6 +81,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             set => this.RaiseAndSetIfChanged(ref _applyNullToGeneratedFaces, value);
         }
 
+        private bool _alwaysGenerateOriginBrushes = false;
+
+        [DataMember]
+        public bool AlwaysGenerateOriginBrushes
+        {
+            get => _alwaysGenerateOriginBrushes;
+            set => this.RaiseAndSetIfChanged(ref _alwaysGenerateOriginBrushes, value);
+        }
+
         private string _decompilerStrategy = DecompilerStrategies.Strategies[0].Name;
 
         [DataMember]
@@ -115,6 +125,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
         {
             get => _brushOptimization;
             set => this.RaiseAndSetIfChanged(ref _brushOptimization, value);
+        }
+
+        private List<string> _triggerEntityWildcards = new();
+
+        [DataMember]
+        public List<string> TriggerEntityWildcards
+        {
+            get => _triggerEntityWildcards;
+            set => this.RaiseAndSetIfChanged(ref _triggerEntityWildcards, value);
         }
 
         public void Load()

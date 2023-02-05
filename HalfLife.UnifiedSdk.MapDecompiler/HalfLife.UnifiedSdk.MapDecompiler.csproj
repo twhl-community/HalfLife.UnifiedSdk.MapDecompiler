@@ -27,6 +27,7 @@
     <PackageReference Include="Silk.NET.Maths" Version="2.16.0" />
     <PackageReference Include="Sledge.Formats.Bsp" Version="1.0.8" />
     <PackageReference Include="Sledge.Formats.Map" Version="1.0.6" />
+    <PackageReference Include="WildcardMatch" Version="1.0.7" />
   </ItemGroup>
 
 </Project>

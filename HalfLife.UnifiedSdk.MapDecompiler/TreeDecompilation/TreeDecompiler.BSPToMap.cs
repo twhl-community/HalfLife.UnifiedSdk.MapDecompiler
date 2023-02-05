@@ -1,6 +1,7 @@
 ﻿using Sledge.Formats.Bsp.Objects;
 using Sledge.Formats.Id;
 using Sledge.Formats.Map.Objects;
+using WildcardMatch;
 using MapFace = Sledge.Formats.Map.Objects.Face;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
@@ -9,36 +10,46 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
     {
         private void BSPBrushToMapBrush(BspBrush brush, DecompiledEntity entity, Vector3 origin)
         {
-            var besttexinfo = TexInfoNode;
-
-            foreach (var side in brush.Sides)
             {
-                if (side.Winding is null)
+                var besttexinfo = TexInfoNode;
+
+                foreach (var side in brush.Sides)
                 {
-                    continue;
+                    if (side.Winding is null)
+                    {
+                        continue;
+                    }
+
+                    if (side.TextureInfo != TexInfoNode)
+                    {
+                        //this brush side is textured
+                        besttexinfo = side.TextureInfo;
+                    }
                 }
 
-                if (side.TextureInfo != TexInfoNode)
+                if (besttexinfo == TexInfoNode)
                 {
-                    //this brush side is textured
-                    besttexinfo = side.TextureInfo;
+                    if (!_options.TriggerEntityWildcards.Any(w => w.WildcardMatch(entity.Entity.ClassName)))
+                    {
+                        // TODO: maybe add a clip texture to it and keep the brush
+                        brush.Sides.Clear();
+                        ++_numClipBrushes;
+                        return;
+                    }
+
+                    foreach (var side in brush.Sides)
+                    {
+                        side.TextureInfo = _triggerTextureInfo;
+                    }
                 }
-            }
 
-            if (besttexinfo == TexInfoNode)
-            {
-                // TODO: maybe add a clip texture to it and keep the brush
-                brush.Sides.Clear();
-                ++_numClipBrushes;
-                return;
-            }
-
-            //set the texinfo for all the brush sides without texture
-            foreach (var side in brush.Sides)
-            {
-                if (side.TextureInfo == TexInfoNode)
+                //set the texinfo for all the brush sides without texture
+                foreach (var side in brush.Sides)
                 {
-                    side.TextureInfo = _options.ApplyNullToGeneratedFaces ? _nullTextureInfo : besttexinfo;
+                    if (side.TextureInfo == TexInfoNode)
+                    {
+                        side.TextureInfo = _options.ApplyNullToGeneratedFaces ? _nullTextureInfo : besttexinfo;
+                    }
                 }
             }
 

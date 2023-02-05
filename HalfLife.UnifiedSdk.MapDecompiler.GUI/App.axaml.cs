@@ -15,6 +15,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
 
         public override void OnFrameworkInitializationCompleted()
         {
+            Settings.Default.Load();
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new MainWindow

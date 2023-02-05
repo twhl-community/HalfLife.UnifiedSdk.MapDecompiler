@@ -1,4 +1,5 @@
 ﻿using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
+using System.Collections.Immutable;
 using System.CommandLine;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
@@ -50,6 +51,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 getDefaultValue: () => false,
                 description: "Whether to apply NULL to generated faces");
 
+            var alwaysGenerateOriginBrushesOption = new Option<bool>(
+                "--generate-origin-brushes",
+                getDefaultValue: () => false,
+                description: "Whether to always generate origin brushes for brush entities");
+
             var mergeBrushesOption = new Option<bool>("--merge-brushes",
                 getDefaultValue: () => true,
                 description: "Whether to merge brushes");
@@ -62,22 +68,38 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 getDefaultValue: () => BrushOptimization.BestTextureMatch,
                 description: "What to optimize brushes for");
 
+            var triggerEntityClassNameWildcardsOption = new Option<List<string>>(
+                "--trigger-wildcard",
+                description: "List of wildcards matching trigger entities to apply AAATRIGGER to");
+
             var rootCommand = new RootCommand("Half-Life Unified SDK Map Decompiler")
             {
                 decompilerStrategyOption,
                 destinationOption,
                 generateWadFileOption,
                 applyNullToGeneratedFacesOption,
+                alwaysGenerateOriginBrushesOption,
                 mergeBrushesOption,
                 includeLiquidsOption,
                 brushOptimizationOption,
+                triggerEntityClassNameWildcardsOption,
                 filesArgument
             };
 
-            rootCommand.SetHandler((decompilerStrategy, destination,
-                generateWadFile, applyNullToGeneratedFaces, mergeBrushes, includeLiquids, brushOptimization,
-                files) =>
+            rootCommand.SetHandler((context) =>
             {
+                var decompilerStrategy = context.ParseResult.GetValueForOption(decompilerStrategyOption)
+                    ?? DecompilerStrategies.TreeDecompilerStrategy;
+                var destination = context.ParseResult.GetValueForOption(destinationOption);
+                var generateWadFile = context.ParseResult.GetValueForOption(generateWadFileOption);
+                var applyNullToGeneratedFaces = context.ParseResult.GetValueForOption(applyNullToGeneratedFacesOption);
+                var alwaysGenerateOriginBrushes = context.ParseResult.GetValueForOption(alwaysGenerateOriginBrushesOption);
+                var mergeBrushes = context.ParseResult.GetValueForOption(mergeBrushesOption);
+                var includeLiquids = context.ParseResult.GetValueForOption(includeLiquidsOption);
+                var brushOptimization = context.ParseResult.GetValueForOption(brushOptimizationOption);
+                var triggerEntityClassNameWildcards = context.ParseResult.GetValueForOption(triggerEntityClassNameWildcardsOption);
+                var files = context.ParseResult.GetValueForArgument(filesArgument);
+
                 if (!files.Any())
                 {
                     Console.WriteLine("Nothing to decompile");
@@ -102,9 +124,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 DecompilerOptions decompilerOptions = new()
                 {
                     ApplyNullToGeneratedFaces = applyNullToGeneratedFaces,
+                    AlwaysGenerateOriginBrushes = alwaysGenerateOriginBrushes,
                     MergeBrushes = mergeBrushes,
                     IncludeLiquids = includeLiquids,
-                    BrushOptimization = brushOptimization
+                    BrushOptimization = brushOptimization,
+                    TriggerEntityWildcards = triggerEntityClassNameWildcards?.ToImmutableList() ?? ImmutableList<string>.Empty,
                 };
 
                 var destinationDirectory = destination.FullName;
@@ -128,9 +152,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                     // Because we're decompiling multiple maps at the same time the log output would be mixed otherwise.
                     Console.WriteLine(job.Output);
                 });
-            }, decompilerStrategyOption, destinationOption, generateWadFileOption,
-               applyNullToGeneratedFacesOption,  mergeBrushesOption, includeLiquidsOption, brushOptimizationOption,
-               filesArgument);
+            });
 
             return await rootCommand.InvokeAsync(args);
         }

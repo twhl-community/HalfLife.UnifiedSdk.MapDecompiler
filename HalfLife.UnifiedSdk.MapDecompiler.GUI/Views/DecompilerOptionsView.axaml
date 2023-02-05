@@ -28,7 +28,7 @@
 
         <Grid Grid.Column="0" Grid.Row="1"
               ColumnDefinitions="Auto"
-              RowDefinitions="Auto, Auto">
+              RowDefinitions="Auto, Auto, Auto">
             <CheckBox Grid.Row="0"
                       Content="Generate WAD file if the map contains embedded textures"
                       IsChecked="{Binding Settings.GenerateWadFile}"/>
@@ -36,6 +36,10 @@
             <CheckBox Grid.Row="1"
                       Content="Apply NULL to generated faces"
                       IsChecked="{Binding Settings.ApplyNullToGeneratedFaces}"/>
+
+            <CheckBox Grid.Row="2"
+                      Content="Always generate origin brushes for brush entities"
+                      IsChecked="{Binding Settings.AlwaysGenerateOriginBrushes}"/>
         </Grid>
         
         <Label Grid.Column="0" Grid.Row="2"
@@ -50,8 +54,8 @@
                         <RowDefinition SharedSizeGroup="DecompilerTabItemHeight"/>
                     </Grid.RowDefinitions>
 
-                    <Grid ColumnDefinitions="Auto, Auto"
-                      RowDefinitions="Auto, Auto, Auto">
+                    <Grid ColumnDefinitions="Auto, Auto, Auto, Auto"
+                      RowDefinitions="Auto, Auto, Auto, *">
                         <Label Grid.Column="0" Grid.Row="0" Content="General:"/>
 
                         <CheckBox Grid.Column="0" Grid.Row="1"
@@ -73,6 +77,26 @@
                                      GroupName="BrushOptimization"
                                      Content="Fewest Brushes"
                                      IsChecked="{Binding Path=Settings.BrushOptimization, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static local:BrushOptimization.FewestBrushes}}" />
+
+                        <DataGrid Grid.Column="2" Grid.Row="0" Grid.RowSpan="4"
+                                  Width="250" Height="100"
+                                  Items="{Binding TriggerEntityWildcards}"
+                                  AutoGenerateColumns="False"
+                                  CanUserReorderColumns="False"
+                                  CanUserSortColumns="False"
+                                  SelectionMode="Single"
+                                  SelectedIndex="{Binding SelectedTriggerEntityWildcardIndex}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Trigger entity classname wildcards" Binding="{Binding Value}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        
+                        <Button Grid.Column="3" Grid.Row="0"
+                                Width="75" HorizontalContentAlignment="Center"
+                                Content="Add" Command="{Binding AddTriggerEntityWildcard}"/>
+                        <Button Grid.Column="3" Grid.Row="1"
+                                Width="75" HorizontalContentAlignment="Center"
+                                Content="Remove" Command="{Binding RemoveTriggerEntityWildcard}"/>
                     </Grid>
                 </Grid>
             </TabItem>

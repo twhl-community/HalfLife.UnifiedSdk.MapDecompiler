@@ -47,6 +47,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
         private readonly int _nullTextureIndex;
         private readonly int _nullTextureInfo;
 
+        private readonly int _triggerTextureIndex;
+        private readonly int _triggerTextureInfo;
+
         private TreeDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
         {
             _logger = logger;
@@ -154,14 +157,14 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             // Add some tool textures.
             _originTextureIndex = FindOrCreateTexture("ORIGIN");
             _nullTextureIndex = FindOrCreateTexture("NULL");
+            _triggerTextureIndex = FindOrCreateTexture("AAATRIGGER");
 
             // Use a dummy texture info entry for generated faces. Will be largely ignored and set to sensible values.
             _nullTextureInfo = _bspTexInfo.Count;
+            _bspTexInfo.Add(new() { MipTexture = _nullTextureIndex, });
 
-            _bspTexInfo.Add(new()
-            {
-                MipTexture = _nullTextureIndex,
-            });
+            _triggerTextureInfo = _bspTexInfo.Count;
+            _bspTexInfo.Add(new() { MipTexture = _triggerTextureIndex });
 
             // Cache the texture name lookup map
             _textureNameMap = _bspTexInfo
@@ -216,6 +219,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
             Debug.Assert(entitiesLump[0].ClassName == "worldspawn");
 
             DecompilerUtils.PrintSharedOptions(_logger, _options);
+
+            if (_options.AlwaysGenerateOriginBrushes)
+            {
+                _logger.Information("Always generating origin brushes for brush entities");
+            }
 
             if (_options.MergeBrushes)
             {
@@ -303,7 +311,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                 _cancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (brushlist.Count > 0 && origin != Vector3.Zero)
+            if (brushlist.Count > 0 && (_options.AlwaysGenerateOriginBrushes || origin != Vector3.Zero))
             {
                 AddOriginBrush(entity, origin);
             }
