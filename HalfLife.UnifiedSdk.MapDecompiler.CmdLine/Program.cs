@@ -45,6 +45,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 getDefaultValue: () => true,
                 description: "Whether to generate a WAD file if the map contains embedded textures");
 
+            var applyNullToGeneratedFacesOption = new Option<bool>(
+                "--apply-null",
+                getDefaultValue: () => false,
+                description: "Whether to apply NULL to generated faces");
+
             var mergeBrushesOption = new Option<bool>("--merge-brushes",
                 getDefaultValue: () => true,
                 description: "Whether to merge brushes");
@@ -62,13 +67,16 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 decompilerStrategyOption,
                 destinationOption,
                 generateWadFileOption,
+                applyNullToGeneratedFacesOption,
                 mergeBrushesOption,
                 includeLiquidsOption,
                 brushOptimizationOption,
                 filesArgument
             };
 
-            rootCommand.SetHandler((decompilerStrategy, destination, generateWadFile, mergeBrushes, includeLiquids, brushOptimization, files) =>
+            rootCommand.SetHandler((decompilerStrategy, destination,
+                generateWadFile, applyNullToGeneratedFaces, mergeBrushes, includeLiquids, brushOptimization,
+                files) =>
             {
                 if (!files.Any())
                 {
@@ -93,6 +101,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 MapDecompilerFrontEnd decompiler = new();
                 DecompilerOptions decompilerOptions = new()
                 {
+                    ApplyNullToGeneratedFaces = applyNullToGeneratedFaces,
                     MergeBrushes = mergeBrushes,
                     IncludeLiquids = includeLiquids,
                     BrushOptimization = brushOptimization
@@ -120,7 +129,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                     Console.WriteLine(job.Output);
                 });
             }, decompilerStrategyOption, destinationOption, generateWadFileOption,
-                mergeBrushesOption, includeLiquidsOption, brushOptimizationOption, filesArgument);
+               applyNullToGeneratedFacesOption,  mergeBrushesOption, includeLiquidsOption, brushOptimizationOption,
+               filesArgument);
 
             return await rootCommand.InvokeAsync(args);
         }
