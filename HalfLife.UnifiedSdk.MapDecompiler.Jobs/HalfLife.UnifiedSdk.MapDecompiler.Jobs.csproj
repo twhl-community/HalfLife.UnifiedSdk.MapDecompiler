@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="Sledge.Formats.Texture" Version="1.0.2" />
+    <PackageReference Include="Sledge.Formats.Texture" Version="1.0.3" />
   </ItemGroup>
 
   <ItemGroup>
