@@ -32,7 +32,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public ICommand ConvertFilesCommand { get; }
 
-        public Interaction<OpenFileViewModel, string[]?> ShowConvertFilesDialog { get; } = new();
+        public Interaction<OpenFileViewModel, IReadOnlyList<string>?> ShowConvertFilesDialog { get; } = new();
 
         public ICommand QuitCommand { get; }
 
@@ -119,8 +119,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                     Title = "Convert",
                     Filters = new[]
                     {
-                        new FileFilter("Half-Life 1 BSP Files (.bsp)", "bsp"),
-                        new FileFilter("All Files", "*")
+                        new FileFilter("Half-Life 1 BSP Files (.bsp)", "*.bsp"),
+                        new FileFilter("All Files", "*.*")
                     },
                     AllowMultiple = true,
                     Directory = Settings.Default.LastConvertDirectory
@@ -128,7 +128,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
                 var result = await ShowConvertFilesDialog.Handle(store);
 
-                if (result is null || result.Length == 0)
+                if (result is null || result.Count == 0)
                 {
                     return;
                 }

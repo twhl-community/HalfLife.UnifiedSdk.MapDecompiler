@@ -8,6 +8,9 @@ using ReactiveUI;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
+using System.Collections.Generic;
+using System;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 {
@@ -80,21 +83,20 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
             Close();
         }
 
-        private async Task DoShowOpenFileDialogAsync(InteractionContext<OpenFileViewModel, string[]?> interaction)
+        private async Task DoShowOpenFileDialogAsync(InteractionContext<OpenFileViewModel, IReadOnlyList<string>?> interaction)
         {
-            var dialog = new OpenFileDialog
+            var options = new FilePickerOpenOptions
             {
                 Title = interaction.Input.Title,
-                Filters = interaction.Input.Filters.Select(f => new FileDialogFilter
+                FileTypeFilter = interaction.Input.Filters.Select(f => new FilePickerFileType(f.Name)
                 {
-                    Name = f.Name,
-                    Extensions = f.Extensions
+                    Patterns = f.Extensions
                 }).ToList(),
                 AllowMultiple = interaction.Input.AllowMultiple
             };
 
-            var result = await dialog.ShowAsync(this);
-            interaction.SetOutput(result);
+            var result = await StorageProvider.OpenFilePickerAsync(options);
+            interaction.SetOutput(result.Select(f => f.Path.LocalPath).ToList());
         }
 
         private void DoQuitApplication(InteractionContext<Unit, Unit> interaction)
@@ -105,14 +107,27 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
         private async Task DoShowOpenDirectoryDialogAsync(InteractionContext<OpenDirectoryViewModel, string?> interaction)
         {
-            var dialog = new OpenFolderDialog
+            var options = new FolderPickerOpenOptions
             {
                 Title = interaction.Input.Title,
-                Directory = interaction.Input.Directory
+                AllowMultiple = false
             };
 
-            var result = await dialog.ShowAsync(this);
-            interaction.SetOutput(result);
+            if (interaction.Input.Directory is not null)
+            {
+                options.SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(new Uri(interaction.Input.Directory));
+            }
+
+            var result = await StorageProvider.OpenFolderPickerAsync(options);
+
+            if (result.Count > 0)
+            {
+                interaction.SetOutput(result[0].Path.LocalPath);
+            }
+            else
+            {
+                interaction.SetOutput(null);
+            }
         }
 
         private async Task DoShowCancelAllJobsDialogAsync(InteractionContext<CancelAllJobsDialogViewModel, bool> interaction)
