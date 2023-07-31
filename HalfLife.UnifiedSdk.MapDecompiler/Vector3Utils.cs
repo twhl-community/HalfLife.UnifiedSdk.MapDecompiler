@@ -82,7 +82,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
             {
                 for (int i = 0; i < 3; ++i)
                 {
-                    SetByIndex(ref normal, i, Math.Floor(GetByIndex(ref normal, i)));
+                    SetByIndex(ref normal, i, Math.Round(GetByIndex(ref normal, i)));
                 }
             }
         }
