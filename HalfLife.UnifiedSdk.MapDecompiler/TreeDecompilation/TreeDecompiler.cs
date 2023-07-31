@@ -13,7 +13,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
 {
     internal sealed partial class TreeDecompiler
     {
-        private const int PlaneHashes = 1024;
+        private const int PlaneHashes = short.MaxValue;
 
         private const int TexInfoNode = -1; //side is allready on a node
 
