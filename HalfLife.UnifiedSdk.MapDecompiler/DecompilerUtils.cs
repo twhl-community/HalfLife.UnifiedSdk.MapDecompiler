@@ -51,21 +51,27 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
         {
             MapFile mapFile = new();
 
-            static Dictionary<string, string> CopyKeyValues(Dictionary<string, string> keyValues)
+            static void CopyKeyValues(Entity entity, List<KeyValuePair<string, string>> keyValues)
             {
-                var copy = keyValues.ToDictionary(kv => kv.Key, kv => kv.Value);
+                var list = entity.SortedProperties;
 
-                copy.Remove("classname");
-
-                return copy;
+                list.Clear();
+                list.AddRange(keyValues);
+                list.RemoveAll(kv => kv.Key == "classname");
             }
 
-            mapFile.Worldspawn.Properties = CopyKeyValues(entities[0].KeyValues);
+             CopyKeyValues(mapFile.Worldspawn, entities[0].SortedKeyValues);
 
-            mapFile.Worldspawn.Children.AddRange(entities.Skip(1).Select(e => new Entity
+            mapFile.Worldspawn.Children.AddRange(entities.Skip(1).Select(e =>
             {
-                ClassName = e.ClassName,
-                Properties = CopyKeyValues(e.KeyValues)
+                var entity = new Entity
+                {
+                    ClassName = e.ClassName
+                };
+
+                CopyKeyValues(entity, e.SortedKeyValues);
+
+                return entity;
             }));
 
             return mapFile;

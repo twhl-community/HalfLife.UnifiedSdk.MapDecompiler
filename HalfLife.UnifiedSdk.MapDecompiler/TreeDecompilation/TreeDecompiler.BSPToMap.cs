@@ -416,9 +416,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.TreeDecompilation
                     _ => 1
                 };
 
-                face.Vertices.Add(w.Points[p1].ToSingle());
-                face.Vertices.Add(w.Points[1 - p1].ToSingle());
                 face.Vertices.Add(w.Points[2].ToSingle());
+                face.Vertices.Add(w.Points[1 - p1].ToSingle());
+                face.Vertices.Add(w.Points[p1].ToSingle());
 
                 mapBrush.Faces.Add(face);
             }

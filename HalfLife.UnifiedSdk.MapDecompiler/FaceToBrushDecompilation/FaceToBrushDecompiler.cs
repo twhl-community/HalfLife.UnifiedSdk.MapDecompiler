@@ -392,9 +392,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             var frontVertices = new[]
             {
-                winding.Points[0],
+                winding.Points[2],
                 winding.Points[1],
-                winding.Points[2]
+                winding.Points[0]
             };
 
             frontFace.Vertices.AddRange(frontVertices.Select(v => (v + origin).ToSingle()));
@@ -448,9 +448,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                     VAxis = vAxis.ToSingle()
                 };
 
-                sideFace.Vertices.Add((firstSideVertex + origin).ToSingle());
-                sideFace.Vertices.Add((secondSideVertex + origin).ToSingle());
                 sideFace.Vertices.Add((thirdSideVertex + origin).ToSingle());
+                sideFace.Vertices.Add((secondSideVertex + origin).ToSingle());
+                sideFace.Vertices.Add((firstSideVertex + origin).ToSingle());
 
                 solid.Faces.Add(sideFace);
             }
@@ -461,9 +461,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         // Vertices for a face facing down the X axis, without size applied.
         private static readonly ReadOnlyMemory<Vector3> FaceVertices = new[]
         {
-            new Vector3(1, 1, 1),
+            new Vector3(1, -1, -1),
             new Vector3(1, 1, -1),
-            new Vector3(1, -1, -1)
+            new Vector3(1, 1, 1)
         };
 
         private const double RotationAmount = Math.PI / 2;
