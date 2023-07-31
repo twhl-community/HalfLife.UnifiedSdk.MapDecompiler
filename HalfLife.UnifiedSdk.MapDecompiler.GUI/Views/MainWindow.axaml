@@ -63,7 +63,7 @@ They cannot be changed afterwards without converting the file again.<LineBreak/>
 				  RowDefinitions="*">
 				<DataGrid Grid.Column="0"
 						  Grid.Row="1"
-						  Items="{Binding Files}"
+						  ItemsSource="{Binding Files}"
 						  AutoGenerateColumns="False"
 						  IsReadOnly="True"
 						  CanUserReorderColumns="False"

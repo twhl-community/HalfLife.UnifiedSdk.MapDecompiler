@@ -1,5 +1,6 @@
 ﻿using Avalonia;
-using Avalonia.Themes.Fluent;
+using Avalonia.Styling;
+using HalfLife.UnifiedSdk.MapDecompiler.GUI.Converters;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -27,21 +28,17 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             MapDecompilerGuiConstants.ConfigFileName);
 
         // Must match setting in App.axaml
-        private FluentThemeMode _theme = FluentThemeMode.Light;
+        private ThemeVariant _theme = ThemeVariant.Default;
 
         [DataMember]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public FluentThemeMode Theme
+        [JsonConverter(typeof(StringToThemeVariantConverter))]
+        public ThemeVariant Theme
         {
             get => _theme;
             set
             {
                 this.RaiseAndSetIfChanged(ref _theme, value);
-
-                if (Application.Current!.Styles[0] is FluentTheme theme)
-                {
-                    theme.Mode = _theme;
-                }
+                Application.Current!.RequestedThemeVariant = value;
             }
         }
 

@@ -1,11 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
-using Avalonia.Themes.Fluent;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
 using ReactiveUI;
-using System.ComponentModel;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
@@ -46,12 +45,12 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
         public void Theme_ChangeToLight(object? sender, RoutedEventArgs e)
         {
-            Settings.Default.Theme = FluentThemeMode.Light;
+            Settings.Default.Theme = ThemeVariant.Light;
         }
 
         public void Theme_ChangeToDark(object? sender, RoutedEventArgs e)
         {
-            Settings.Default.Theme = FluentThemeMode.Dark;
+            Settings.Default.Theme = ThemeVariant.Dark;
         }
 
         public async void About_Click(object? sender, RoutedEventArgs e)
@@ -62,7 +61,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
         }
 
         // See https://stackoverflow.com/a/49013345/1306648
-        public async void Window_Closing(object? sender, CancelEventArgs e)
+        public async void Window_Closing(object? sender, WindowClosingEventArgs e)
         {
             e.Cancel = true;
 

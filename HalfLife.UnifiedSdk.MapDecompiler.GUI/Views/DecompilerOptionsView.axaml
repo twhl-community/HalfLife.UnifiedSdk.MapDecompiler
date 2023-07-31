@@ -80,7 +80,7 @@
 
                         <DataGrid Grid.Column="2" Grid.Row="0" Grid.RowSpan="4"
                                   Width="250" Height="100"
-                                  Items="{Binding TriggerEntityWildcards}"
+                                  ItemsSource="{Binding TriggerEntityWildcards}"
                                   AutoGenerateColumns="False"
                                   CanUserReorderColumns="False"
                                   CanUserSortColumns="False"
