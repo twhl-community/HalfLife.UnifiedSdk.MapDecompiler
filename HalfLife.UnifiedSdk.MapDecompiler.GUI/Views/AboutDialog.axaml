@@ -17,7 +17,7 @@
         <SelectableTextBlock Margin="20">
 Half-Life Unified SDK Map Decompiler <Run Text="{Binding Version}"/><LineBreak/>
 <LineBreak/>
-2022 Sam Vanheer<LineBreak/>
+2023 Sam Vanheer<LineBreak/>
 <LineBreak/>
 Email: sam.vanheer@outlook.com<LineBreak/>
 <LineBreak/>
