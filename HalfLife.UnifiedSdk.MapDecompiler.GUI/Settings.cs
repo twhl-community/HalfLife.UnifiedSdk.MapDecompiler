@@ -2,6 +2,8 @@
 using Avalonia.Styling;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.Converters;
 using HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using ReactiveUI;
@@ -9,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
 {
@@ -133,14 +136,31 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             set => this.RaiseAndSetIfChanged(ref _triggerEntityWildcards, value);
         }
 
-        public void Load()
+        public async Task Load()
         {
             var fileName = FileName;
 
             if (File.Exists(fileName))
             {
-                var json = File.ReadAllText(fileName);
-                JsonConvert.PopulateObject(json, this);
+                try
+                {
+                    var json = File.ReadAllText(fileName);
+
+                    // File is empty; we'll write to it later.
+                    if (string.IsNullOrWhiteSpace(json))
+                    {
+                        return;
+                    }
+
+                    JsonConvert.PopulateObject(json, this);
+                }
+                catch (Exception e)
+                {
+                    var box = MessageBoxManager.GetMessageBoxStandard("Error reading configuration file",
+                        $"An error occurred while reading the configuration file\nError:{e}", ButtonEnum.Ok);
+
+                    await box.ShowAsync();
+                }
             }
         }
 

@@ -13,9 +13,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             AvaloniaXamlLoader.Load(this);
         }
 
-        public override void OnFrameworkInitializationCompleted()
+        public override async void OnFrameworkInitializationCompleted()
         {
-            Settings.Default.Load();
+            await Settings.Default.Load();
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
