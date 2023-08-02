@@ -29,6 +29,25 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
                 writer.Write((uint)BspVersion.Goldsource);
             }
 
+            if (magic != BspVersion.Goldsource)
+            {
+                if (!Enum.IsDefined(magic))
+                {
+                    // This may be a Source map which has a 4 byte id before the version.
+                    // Read the whole thing as a 64 bit integer instead.
+                    memoryStream.Position = 0;
+
+                    var version = (BspVersion)reader.ReadUInt64();
+
+                    if (Enum.IsDefined(version))
+                    {
+                        magic = version;
+                    }
+                }
+
+                throw new NotSupportedException($"Cannot decompile version {magic} BSP files");
+            }
+
             memoryStream.Position = 0;
 
             return (new BspFile(memoryStream), magic == BspVersion.Quake1);
