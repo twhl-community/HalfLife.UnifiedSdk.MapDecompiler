@@ -157,31 +157,41 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
                 catch (Exception e)
                 {
                     var box = MessageBoxManager.GetMessageBoxStandard("Error reading configuration file",
-                        $"An error occurred while reading the configuration file\nError:{e}", ButtonEnum.Ok);
+                        "An error occurred while reading the configuration file\n\n" +
+                        "Error: " + e.ToString(), ButtonEnum.Ok);
 
                     await box.ShowAsync();
                 }
             }
         }
 
-        public void Save()
+        public async Task Save()
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FileName)!);
-            using var stream = File.Open(FileName, FileMode.Create);
-            Save(stream);
-        }
-
-        public void Save(Stream stream)
-        {
-            using StreamWriter streamWriter = new(stream, leaveOpen: true);
-            using JsonTextWriter jsonWriter = new(streamWriter);
-
-            JsonSerializer serializer = new()
+            try
             {
-                Formatting = Formatting.Indented,
-            };
+                Directory.CreateDirectory(Path.GetDirectoryName(FileName)!);
 
-            serializer.Serialize(jsonWriter, this);
+                using var stream = File.Open(FileName, FileMode.Create);
+
+                using StreamWriter streamWriter = new(stream, leaveOpen: true);
+                using JsonTextWriter jsonWriter = new(streamWriter);
+
+                JsonSerializer serializer = new()
+                {
+                    Formatting = Formatting.Indented,
+                };
+
+                serializer.Serialize(jsonWriter, this);
+            }
+            catch (Exception e)
+            {
+                var box = MessageBoxManager.GetMessageBoxStandard("Error writing configuration file",
+                    "An error occurred while writing the configuration file\n" +
+                    "Make sure the file is not read-only and that the program has permission to access it\n\n" +
+                    "Error:" + e.ToString(), ButtonEnum.Ok);
+
+                await box.ShowAsync();
+            }
         }
     }
 }

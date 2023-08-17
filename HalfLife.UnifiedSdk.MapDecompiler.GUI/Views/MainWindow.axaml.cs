@@ -80,6 +80,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
             await ViewModel!.OnClosing();
 
+            await Settings.Default.Save();
+
             Close();
         }
 
