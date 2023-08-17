@@ -78,7 +78,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
 
             Closing -= Window_Closing;
 
-            await ViewModel!.OnClosing();
+            ViewModel!.OnClosing();
 
             await Settings.Default.Save();
 

@@ -11,20 +11,14 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Collections.Specialized;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private CancellationTokenSource _jobCancellationTokenSource = new();
-
-        private Task _jobTask = Task.CompletedTask;
-
-        private readonly MapDecompilerFrontEnd _decompiler = new();
+        private readonly JobQueue _jobQueue = new();
 
         private readonly ILogger _programLogger;
 
@@ -42,11 +36,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public Interaction<CancelAllJobsDialogViewModel, bool> ShowCancelAllJobsDialog { get; } = new();
 
-        public bool CanCancelAllJobs => !_jobTask.IsCompleted;
+        public bool CanCancelAllJobs => !_jobQueue.IsEmpty;
 
         public ICommand DecompileAllAgainCommand { get; }
 
-        public bool CanDecompileAllJobsAgain => _jobTask.IsCompleted;
+        public bool CanDecompileAllJobsAgain => _jobQueue.IsEmpty;
 
         public ObservableCollection<MapDecompilerJob> Files { get; } = new();
 
@@ -94,7 +88,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public DecompilerOptionsViewModel DecompilerOptions { get; } = new();
 
-        public bool HasJobItems => !_jobTask.IsCompleted;
+        public bool HasJobItems => !_jobQueue.IsEmpty;
 
         public ICommand DeleteCommand { get; }
 
@@ -107,6 +101,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         public MainWindowViewModel()
         {
+            _jobQueue.OnJobStarting += OnJobStarting;
+            _jobQueue.OnJobCompleted += OnJobCompleted;
+            _jobQueue.OnExceptionCaught += OnExceptionCaught;
+
             _programLogger = new LoggerConfiguration()
                 .WriteTo.Sink(new ForwardingSink(message => ProgramOutput += message, "{Message:lj}{NewLine}{Exception}"))
                 .MinimumLevel.Information()
@@ -165,7 +163,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
             QuitCommand = ReactiveCommand.Create(async () => await QuitApplication.Handle(new()));
 
-            CancelAllCommand = ReactiveCommand.Create(async () => await CancelAllJobs(), this.WhenAnyValue(x => x.CanCancelAllJobs));
+            CancelAllCommand = ReactiveCommand.Create(() => CancelAllJobs(), this.WhenAnyValue(x => x.CanCancelAllJobs));
 
             DecompileAllAgainCommand = ReactiveCommand.Create(() => QueueAllJobsAgain(), this.WhenAnyValue(x => x.CanDecompileAllJobsAgain, x => x.Files.Count,
                 (canDecompile, filesCount) => canDecompile && filesCount > 0));
@@ -189,18 +187,18 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             return await ShowCancelAllJobsDialog.Handle(new());
         }
 
-        public async Task OnClosing()
+        public void OnClosing()
         {
-            await CancelAllJobs();
+            CancelAllJobs();
+            _jobQueue.Stop();
+            _jobQueue.Dispose();
         }
 
-        public async Task CancelAllJobs()
+        public void CancelAllJobs()
         {
             _programLogger.Information("Cancelling all jobs");
-            _jobCancellationTokenSource.Cancel();
-            await _jobTask;
-            _jobTask = Task.CompletedTask;
-            _jobCancellationTokenSource = new();
+            _jobQueue.CancelAllJobs();
+            this.RaisePropertyChanged(nameof(CanDecompileAgain));
         }
 
         private static void LogMessage(MapDecompilerJob job, string message)
@@ -218,23 +216,70 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 ?? DecompilerStrategies.Strategies[0];
             var decompilerOptions = DecompilerOptions.ToOptions();
             var generateWadFile = Settings.Default.GenerateWadFile;
-            var cancellationToken = _jobCancellationTokenSource.Token;
 
             // If we're starting a single job just activate the job log automatically.
-            if (_jobTask.IsCompleted && jobs.Count == 1)
+            if (_jobQueue.IsEmpty && jobs.Count == 1)
             {
                 CurrentJob = jobs[0];
             }
 
-            _jobTask = _jobTask.ContinueWith(
-                (_, _) => ExecuteJobs(jobs, decompilerStrategy, decompilerOptions, generateWadFile, cancellationToken),
-                state: null,
-                cancellationToken: CancellationToken.None,
-                continuationOptions: TaskContinuationOptions.LongRunning,
-                scheduler: TaskScheduler.Default);
+            _programLogger.Information("Adding {Count} jobs", jobs.Count);
+
+            if (_jobQueue.IsEmpty)
+            {
+                _programStopwatch.Restart();
+            }
+
+            _jobQueue.AddJobs(jobs, decompilerStrategy, decompilerOptions, generateWadFile);
 
             this.RaisePropertyChanged(nameof(CanCancelAllJobs));
             this.RaisePropertyChanged(nameof(CanDecompileAllJobsAgain));
+        }
+
+        private void OnJobStarting(MapDecompilerJob job)
+        {
+            Dispatcher.UIThread.Post(() => job.Status = MapDecompilerJobStatus.Converting);
+        }
+
+        private void OnJobCompleted(MapDecompilerJob job, MapDecompilerJobStatus result)
+        {
+            job.MessageReceived -= LogMessage;
+
+            var timeElapsed = _programStopwatch.Elapsed;
+
+            bool isLastJob = _jobQueue.IsEmpty;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                job.Status = result;
+
+                if (job == CurrentJob)
+                {
+                    this.RaisePropertyChanged(nameof(CanDecompileAgain));
+                }
+
+                if (result != MapDecompilerJobStatus.Canceled)
+                {
+                    var status = result != MapDecompilerJobStatus.Done ? $"({result}) " : string.Empty;
+
+                    _programLogger.Information("{Status}{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}",
+                        status, job.From, job.To, timeElapsed);
+                }
+
+                if (isLastJob)
+                {
+                    _programLogger.Information("Total time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", timeElapsed);
+                    this.RaisePropertyChanged(nameof(CanCancelAllJobs));
+                    this.RaisePropertyChanged(nameof(CanDecompileAllJobsAgain));
+                    _programStopwatch.Stop();
+                }
+            });
+        }
+
+        private void OnExceptionCaught(Exception e)
+        {
+            Dispatcher.UIThread.Post(() =>
+                _programLogger.Error(e, "An error occurred while processing one or more jobs"));
         }
 
         private static void ResetJob(MapDecompilerJob job)
@@ -252,7 +297,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
 
         private void QueueAllJobsAgain()
         {
-            Debug.Assert(_jobTask.IsCompleted);
+            Debug.Assert(_jobQueue.IsEmpty);
 
             foreach (var job in Files)
             {
@@ -260,83 +305,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
             }
 
             QueueJobs(Files.ToList());
-        }
-
-        private void ExecuteJobs(List<MapDecompilerJob> jobs, DecompilerStrategy decompilerStrategy,
-            DecompilerOptions decompilerOptions, bool generateWadFile,
-            CancellationToken cancellationToken)
-        {
-            Dispatcher.UIThread.Post(() => _programLogger.Information("Starting {Count} new jobs", jobs.Count));
-            _programStopwatch.Restart();
-
-            try
-            {
-                Parallel.ForEach(
-                    jobs,
-                    new ParallelOptions()
-                    {
-                        CancellationToken = cancellationToken,
-                        // Use no more than half the cores to keep the UI responsive.
-                        MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2),
-                    },
-                    job =>
-                {
-                    Dispatcher.UIThread.Post(() => job.Status = MapDecompilerJobStatus.Converting);
-
-                    var result = _decompiler.Decompile(
-                        job, decompilerStrategy, decompilerOptions, generateWadFile, cancellationToken);
-
-                    var timeElapsed = _programStopwatch.Elapsed;
-
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        job.Status = result;
-
-                        if (job == CurrentJob)
-                        {
-                            this.RaisePropertyChanged(nameof(CanDecompileAgain));
-                        }
-
-                        _programLogger.Information("{Status}{From} => {To}: Time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}",
-                            result != MapDecompilerJobStatus.Done ? $"({result}) " : string.Empty, job.From, job.To, timeElapsed);
-                    });
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                foreach (var job in jobs)
-                {
-                    if (job.Status == MapDecompilerJobStatus.Waiting)
-                    {
-                        job.Status = MapDecompilerJobStatus.Canceled;
-                    }
-                }
-
-                Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(CanDecompileAgain)));
-            }
-            catch (Exception e)
-            {
-                _programLogger.Error(e, "An error occurred while processing one or more jobs");
-            }
-            finally
-            {
-                foreach (var job in jobs)
-                {
-                    job.MessageReceived -= LogMessage;
-                }
-            }
-
-            {
-                var timeElapsed = _programStopwatch.Elapsed;
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    _programLogger.Information("Total time elapsed: {Time:dd\\.hh\\:mm\\:ss\\.fff}", timeElapsed);
-                    this.RaisePropertyChanged(nameof(CanCancelAllJobs));
-                    this.RaisePropertyChanged(nameof(CanDecompileAllJobsAgain));
-                });
-                _programStopwatch.Stop();
-            }
         }
     }
 }
