@@ -16,8 +16,6 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         private readonly BlockingCollection<WorkerJob> _jobs = new();
 
-        private readonly MapDecompilerFrontEnd _decompiler = new();
-
         private int _activeJobsCount;
 
         public bool IsEmpty => Interlocked.CompareExchange(ref _activeJobsCount, 0, 0) == 0;
@@ -107,6 +105,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
 
         private void WorkerThread()
         {
+            var decompiler = new MapDecompilerFrontEnd();
+
             while (!_stopCancellationTokenSource.IsCancellationRequested)
             {
                 WorkerJob job;
@@ -126,7 +126,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
                 {
                     OnJobStarting?.Invoke(job.Job);
 
-                    result = _decompiler.Decompile(job.Job, job.DecompilerStrategy, job.DecompilerOptions, job.GenerateWadFile,
+                    result = decompiler.Decompile(job.Job, job.DecompilerStrategy, job.DecompilerOptions, job.GenerateWadFile,
                     job.CancellationToken);
                 }
                 catch (OperationCanceledException)

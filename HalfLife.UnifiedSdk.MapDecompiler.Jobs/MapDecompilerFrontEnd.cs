@@ -15,9 +15,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Jobs
     /// </summary>
     public sealed class MapDecompilerFrontEnd
     {
-        private readonly Stopwatch _stopWatch = new();
+        private static readonly QuakeMapFormat _format = new();
 
-        private readonly QuakeMapFormat _format = new();
+        private readonly Stopwatch _stopWatch = new();
 
         public MapDecompilerJobStatus Decompile(
             MapDecompilerJob job, DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions,
