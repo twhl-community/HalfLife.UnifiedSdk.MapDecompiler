@@ -105,6 +105,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             var sides = Enumerable.Range(model.FirstFace, model.NumFaces).Select(i => FaceToSide(_bspFaces[i])).ToList();
 
+            RemoveBadSides(modelNumber, sides);
+
             sides = MergeSides(modelNumber, sides);
 
             int brushCount = 0;
@@ -147,7 +149,34 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
                 points.Add(_bspVertices[side ? edge.Start : edge.End]);
             }
 
-            return new(face.Plane, face.Side, face.TextureInfo, new(points));
+            // Remove collinear points now so the merging algorithm doesn't accidentally create concave windings.
+            Winding winding = new(Winding.RemoveCollinearPoints(points));
+
+            return new(face.Plane, face.Side, face.TextureInfo, winding);
+        }
+
+        private void RemoveBadSides(int modelNumber, List<BspSide> sides)
+        {
+            int absoluteIndex = 0;
+
+            for (int i = 0; i < sides.Count;)
+            {
+                var side = sides[i];
+
+                if (side.Winding.Points.Count < 3)
+                {
+                    _logger.Warning("Skipping model {ModelNumber} face {Index}: face has only collinear points",
+                            modelNumber, absoluteIndex);
+                    
+                    sides.RemoveAt(i);
+                }
+                else
+                {
+                    ++i;
+                }
+
+                ++absoluteIndex;
+            }
         }
 
         private List<BspSide> MergeSides(int modelNumber, List<BspSide> sides)
@@ -276,6 +305,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             //
             // check slope of connected lines
             // if the slopes are colinear, the point can be removed
+            // Note that this assumes the polygons don't have collinear points.
             //
             var plane = _bspPlanes[f1.PlaneNumber];
             var planenormal = plane.Normal;
@@ -334,20 +364,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private Solid? CreateMapBrush(int modelNumber, BspSide side, Vector3 origin)
         {
-            if (side.Winding.Points.Count < 3)
-            {
-                // Should never happen since brushes are triangles at minimum.
-                throw new InvalidOperationException("Face with too few edges");
-            }
-
-            var winding = Winding.RemoveCollinearPoints(side.Winding);
-
-            if (winding.Points.Count < 3)
-            {
-                _logger.Warning("Skipping model {ModelNumber} face near {FirstVertex}: face has only collinear points",
-                        modelNumber, side.Winding.Points[0]);
-                return null;
-            }
+            var winding = side.Winding;
 
             var planeNormal = _bspPlanes[side.PlaneNumber].Normal;
 

@@ -365,15 +365,20 @@
 
         public static Winding RemoveCollinearPoints(Winding winding)
         {
-            var result = winding.Clone();
+            return new(RemoveCollinearPoints(winding.Points));
+        }
+
+        public static List<Vector3> RemoveCollinearPoints(List<Vector3> points)
+        {
+            var result = points.ToList();
 
             Span<double> lengths = stackalloc double[3];
 
-            for (int i = 0; i < result.Points.Count;)
+            for (int i = 0; i < result.Count;)
             {
-                var firstVertex = result.Points[i];
-                var secondVertex = result.Points[(i + 1) % result.Points.Count];
-                var thirdVertex = result.Points[(i + 2) % result.Points.Count];
+                var firstVertex = result[i];
+                var secondVertex = result[(i + 1) % result.Count];
+                var thirdVertex = result[(i + 2) % result.Count];
 
                 lengths[0] = (firstVertex - secondVertex).Length;
                 lengths[1] = (thirdVertex - secondVertex).Length;
@@ -384,7 +389,7 @@
                 if (Math.Abs(lengths[2] - (lengths[0] + lengths[1])) <= MathConstants.ContinuousEpsilon)
                 {
                     // Remove middle point.
-                    result.Points.RemoveAt((i + 1) % result.Points.Count);
+                    result.RemoveAt((i + 1) % result.Count);
                 }
                 else
                 {
