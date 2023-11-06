@@ -27,6 +27,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
                 var writer = new BinaryWriter(memoryStream);
 
                 writer.Write((uint)BspVersion.Goldsource);
+                magic = BspVersion.Goldsource;
             }
 
             if (magic != BspVersion.Goldsource)
