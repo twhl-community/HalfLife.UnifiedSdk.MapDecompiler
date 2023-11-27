@@ -49,11 +49,24 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.Views
         public void Theme_ChangeToLight(object? sender, RoutedEventArgs e)
         {
             Settings.Default.Theme = ThemeVariant.Light;
+            ResetDescriptionText();
         }
 
         public void Theme_ChangeToDark(object? sender, RoutedEventArgs e)
         {
             Settings.Default.Theme = ThemeVariant.Dark;
+            ResetDescriptionText();
+        }
+
+        // Workaround for https://github.com/AvaloniaUI/Avalonia/issues/12404
+        // When this bug is fixed this entire method can be removed.
+        private void ResetDescriptionText()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                DescriptionText.IsVisible = false;
+                DescriptionText.IsVisible = true;
+            });
         }
 
         public async void About_Click(object? sender, RoutedEventArgs e)

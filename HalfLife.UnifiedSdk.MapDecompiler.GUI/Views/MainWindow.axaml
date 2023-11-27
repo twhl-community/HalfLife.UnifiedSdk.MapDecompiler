@@ -42,7 +42,7 @@
 				<Button Content="Decompile All Again" Command="{Binding DecompileAllAgainCommand}"/>
 			</StackPanel>
 			
-			<SelectableTextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap">
+			<SelectableTextBlock Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" TextWrapping="Wrap" Name="DescriptionText">
 Welcome to the Half-Life Unified SDK Map Decompiler<LineBreak/>
 <LineBreak/>
 To convert files go to the File menu and choose Convert.<LineBreak/>
