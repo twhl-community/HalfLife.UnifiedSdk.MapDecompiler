@@ -1,5 +1,4 @@
 ﻿using HalfLife.UnifiedSdk.MapDecompiler.Jobs;
-using System.Collections.Immutable;
 using System.CommandLine;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
@@ -8,51 +7,22 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
     {
         static async Task<int> Main(string[] args)
         {
-            var decompilerStrategyOption = new Option<DecompilerStrategy>("--strategy",
-                parseArgument: result =>
-                {
-                    if (result.Tokens.Count == 0)
-                    {
-                        return DecompilerStrategies.TreeDecompilerStrategy;
-                    }
+            var filesArgument = new Argument<IEnumerable<FileInfo>>("files",
+                description: "List of files to decompile");
 
-                    var decompilerStrategy = DecompilerStrategies.Strategies
-                        .SingleOrDefault(s => s.Name.Equals(result.Tokens.Single().Value, StringComparison.InvariantCultureIgnoreCase));
-
-                    if (decompilerStrategy is not null)
-                    {
-                        return decompilerStrategy;
-                    }
-                    else
-                    {
-                        result.ErrorMessage = "Unknown decompiler strategy.";
-                        return DecompilerStrategies.TreeDecompilerStrategy;
-                    }
-                },
-                isDefault: true,
-                description: "Which decompiler algorithm to use");
-
-            decompilerStrategyOption.FromAmong(DecompilerStrategies.Strategies.Select(s => s.Name).ToArray());
-
-            var filesArgument = new Argument<IEnumerable<FileInfo>>("files", description: "List of files to decompile");
-
-            var destinationOption = new Option<DirectoryInfo?>(
-                "--destination",
+            var destinationOption = new Option<DirectoryInfo?>("--destination",
                 getDefaultValue: () => null,
                 description: "Directory to save decompiled maps to. Leave empty to use current working directory");
 
-            var generateWadFileOption = new Option<bool>(
-                "--generate-wad-file",
+            var generateWadFileOption = new Option<bool>("--generate-wad-file",
                 getDefaultValue: () => true,
                 description: "Whether to generate a WAD file if the map contains embedded textures");
 
-            var applyNullToGeneratedFacesOption = new Option<bool>(
-                "--apply-null",
+            var applyNullToGeneratedFacesOption = new Option<bool>("--apply-null",
                 getDefaultValue: () => false,
                 description: "Whether to apply NULL to generated faces");
 
-            var alwaysGenerateOriginBrushesOption = new Option<bool>(
-                "--generate-origin-brushes",
+            var alwaysGenerateOriginBrushesOption = new Option<bool>("--generate-origin-brushes",
                 getDefaultValue: () => false,
                 description: "Whether to always generate origin brushes for brush entities");
 
@@ -68,93 +38,105 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 getDefaultValue: () => BrushOptimization.BestTextureMatch,
                 description: "What to optimize brushes for");
 
-            var triggerEntityClassNameWildcardsOption = new Option<List<string>>(
-                "--trigger-wildcard",
+            var triggerEntityClassNameWildcardsOption = new Option<List<string>>("--trigger-wildcard",
                 description: "List of wildcards matching trigger entities to apply AAATRIGGER to");
 
-            var rootCommand = new RootCommand("Half-Life Unified SDK Map Decompiler")
+            DecompilerOptionsBinder decompilerOptionsBinder = new(applyNullToGeneratedFacesOption,
+                alwaysGenerateOriginBrushesOption,
+                mergeBrushesOption,
+                includeLiquidsOption,
+                brushOptimizationOption,
+                triggerEntityClassNameWildcardsOption);
+
+            var treeStrategyVerb = new Command(DecompilerStrategies.TreeDecompilerStrategy.Name,
+                "Decompiles maps by walking the BSP tree")
             {
-                decompilerStrategyOption,
                 destinationOption,
+                filesArgument,
                 generateWadFileOption,
                 applyNullToGeneratedFacesOption,
                 alwaysGenerateOriginBrushesOption,
                 mergeBrushesOption,
                 includeLiquidsOption,
                 brushOptimizationOption,
-                triggerEntityClassNameWildcardsOption,
-                filesArgument
+                triggerEntityClassNameWildcardsOption
             };
 
-            rootCommand.SetHandler((context) =>
+            treeStrategyVerb.SetHandler((decompilerOptions, destination, files, generateWadFile) =>
             {
-                var decompilerStrategy = context.ParseResult.GetValueForOption(decompilerStrategyOption)
-                    ?? DecompilerStrategies.TreeDecompilerStrategy;
-                var destination = context.ParseResult.GetValueForOption(destinationOption);
-                var generateWadFile = context.ParseResult.GetValueForOption(generateWadFileOption);
-                var applyNullToGeneratedFaces = context.ParseResult.GetValueForOption(applyNullToGeneratedFacesOption);
-                var alwaysGenerateOriginBrushes = context.ParseResult.GetValueForOption(alwaysGenerateOriginBrushesOption);
-                var mergeBrushes = context.ParseResult.GetValueForOption(mergeBrushesOption);
-                var includeLiquids = context.ParseResult.GetValueForOption(includeLiquidsOption);
-                var brushOptimization = context.ParseResult.GetValueForOption(brushOptimizationOption);
-                var triggerEntityClassNameWildcards = context.ParseResult.GetValueForOption(triggerEntityClassNameWildcardsOption);
-                var files = context.ParseResult.GetValueForArgument(filesArgument);
+                DecompileMaps(DecompilerStrategies.TreeDecompilerStrategy, 
+                    decompilerOptions, destination, files, generateWadFile);
+            }, decompilerOptionsBinder, destinationOption, filesArgument, generateWadFileOption);
 
-                if (!files.Any())
-                {
-                    Console.WriteLine("Nothing to decompile");
-                    return;
-                }
+            var faceToBrushStrategyVerb = new Command(DecompilerStrategies.FaceToBrushDecompilerStrategy.Name,
+                "Decompiles maps by converting each visible face to a brush")
+            {
+                destinationOption,
+                filesArgument,
+                generateWadFileOption
+            };
 
-                var groupedFiles = files.GroupBy(f => f.FullName);
+            faceToBrushStrategyVerb.SetHandler((decompilerOptions, destination, files, generateWadFile) =>
+            {
+                DecompileMaps(DecompilerStrategies.FaceToBrushDecompilerStrategy,
+                    decompilerOptions, destination, files, generateWadFile);
+            }, decompilerOptionsBinder, destinationOption, filesArgument, generateWadFileOption);
 
-                foreach (var group in groupedFiles)
-                {
-                    if (group.Count() > 1)
-                    {
-                        Console.WriteLine($"Warning: file name \"{group.Key}\" specified more than once, ignoring duplicates");
-                    }
-                }
-
-                var uniqueFiles = groupedFiles.Select(g => g.Key);
-
-                destination ??= new DirectoryInfo(Directory.GetCurrentDirectory());
-
-                MapDecompilerFrontEnd decompiler = new();
-                DecompilerOptions decompilerOptions = new()
-                {
-                    ApplyNullToGeneratedFaces = applyNullToGeneratedFaces,
-                    AlwaysGenerateOriginBrushes = alwaysGenerateOriginBrushes,
-                    MergeBrushes = mergeBrushes,
-                    IncludeLiquids = includeLiquids,
-                    BrushOptimization = brushOptimization,
-                    TriggerEntityWildcards = triggerEntityClassNameWildcards?.ToImmutableList() ?? ImmutableList<string>.Empty,
-                };
-
-                var destinationDirectory = destination.FullName;
-
-                var jobs = uniqueFiles
-                    .Select(f =>
-                    {
-                        var job = new MapDecompilerJob(f, destinationDirectory);
-
-                        job.MessageReceived += (job, message) => job.Output += message;
-
-                        return job;
-                    })
-                    .ToList();
-
-                Parallel.ForEach(jobs, job =>
-                {
-                    decompiler.Decompile(job, decompilerStrategy, decompilerOptions, generateWadFile, CancellationToken.None);
-
-                    // Write completed log to console.
-                    // Because we're decompiling multiple maps at the same time the log output would be mixed otherwise.
-                    Console.WriteLine(job.Output);
-                });
-            });
+            var rootCommand = new RootCommand("Half-Life Unified SDK Map Decompiler")
+            {
+                treeStrategyVerb,
+                faceToBrushStrategyVerb
+            };
 
             return await rootCommand.InvokeAsync(args);
+        }
+
+        private static void DecompileMaps(DecompilerStrategy decompilerStrategy, DecompilerOptions decompilerOptions,
+            DirectoryInfo? destination, IEnumerable<FileInfo> files, bool generateWadFile)
+        {
+            if (!files.Any())
+            {
+                Console.WriteLine("Nothing to decompile");
+                return;
+            }
+
+            var groupedFiles = files.GroupBy(f => f.FullName);
+
+            foreach (var group in groupedFiles)
+            {
+                if (group.Count() > 1)
+                {
+                    Console.WriteLine($"Warning: file name \"{group.Key}\" specified more than once, ignoring duplicates");
+                }
+            }
+
+            var uniqueFiles = groupedFiles.Select(g => g.Key);
+
+            destination ??= new DirectoryInfo(Directory.GetCurrentDirectory());
+
+            MapDecompilerFrontEnd decompiler = new();
+
+            var destinationDirectory = destination.FullName;
+
+            var jobs = uniqueFiles
+                .Select(f =>
+                {
+                    var job = new MapDecompilerJob(f, destinationDirectory);
+
+                    job.MessageReceived += (job, message) => job.Output += message;
+
+                    return job;
+                })
+                .ToList();
+
+            Parallel.ForEach(jobs, job =>
+            {
+                decompiler.Decompile(job, decompilerStrategy, decompilerOptions, generateWadFile, CancellationToken.None);
+
+                // Write completed log to console.
+                // Because we're decompiling multiple maps at the same time the log output would be mixed otherwise.
+                Console.WriteLine(job.Output);
+            });
         }
     }
 }
