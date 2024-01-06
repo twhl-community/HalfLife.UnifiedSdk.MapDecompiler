@@ -1,10 +1,16 @@
 ﻿using Sledge.Formats.Bsp;
+using System.Text;
 using BspVersion = Sledge.Formats.Bsp.Version;
 
 namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
 {
     public static class BspSerialization
     {
+        /// <summary>
+        /// See below for what this value means.
+        /// </summary>
+        private const int BspIsXmlFileVersion = 1329865020;
+
         public static (BspFile BspFile, bool IsHLAlphaMap) Deserialize(Stream stream)
         {
             // Copy the file and see if it's version 29. If so, switch it to version 30 so HL Alpha maps can load.
@@ -32,7 +38,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
 
             if (magic != BspVersion.Goldsource)
             {
-                if (!Enum.IsDefined(magic))
+                var additionalComments = string.Empty;
+
+                if ((int)magic == BspIsXmlFileVersion)
+                {
+                    additionalComments = @"
+This is actually an XML file, probably an HTML file like an error page (starts with ""<!DOCTYPE html>"")
+downloaded from a server's FastDL host describing why it is rejecting the attempt to download files";
+                }
+                else if (!Enum.IsDefined(magic))
                 {
                     // This may be a Source map which has a 4 byte id before the version.
                     // Read the whole thing as a 64 bit integer instead.
@@ -46,7 +60,20 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.Serialization
                     }
                 }
 
-                throw new NotSupportedException($"Cannot decompile version {magic} BSP files");
+                memoryStream.Position = 0;
+
+                var firstBytes = new byte[64];
+
+                var bytesRead = memoryStream.Read(firstBytes, 0, firstBytes.Length);
+
+                var firstBytesAsUTF8 = Encoding.UTF8.GetString(firstBytes, 0, bytesRead);
+
+                throw new NotSupportedException(
+                    $@"Cannot decompile version {magic} BSP files
+First {bytesRead} bytes converted to UTF-8 are:
+
+""{firstBytesAsUTF8}""
+{additionalComments}");
             }
 
             memoryStream.Position = 0;
