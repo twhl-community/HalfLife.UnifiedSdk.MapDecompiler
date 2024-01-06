@@ -22,7 +22,7 @@ Includes code from Sledge.Formats by Daniel 'Logic & Trick' Walder: https://gith
 
 The graphical interface requires Windows 8 or newer. The command line version requires Windows 7 or newer.
 
-You will need the .NET 6 or newer Desktop Runtime (the .NET SDK includes the runtime): https://dotnet.microsoft.com/en-us/download
+You will need the .NET 6 Desktop Runtime (the .NET SDK includes the runtime): https://dotnet.microsoft.com/en-us/download
 
 Make sure to install the latest version. .NET runtimes receive updates over time that require the latest minor version to be installed to work with programs built to use them.
 
