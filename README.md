@@ -10,7 +10,7 @@ Due to a lack of data in the BSP file the original brushes cannot be restored.
 This data is stored in a lossy format, so a perfect recreation is not possible.
 Decompiled maps will never be 100% accurate, will be missing some geometry and will have invalid geometry in some cases.
 
-This tool is part of the Half-Life Unified SDK. See the main [Unified SDK](https://github.com/SamVanheer/halflife-unified-sdk) repository for more information.
+This tool is part of the Half-Life Unified SDK. See the main [Unified SDK](https://github.com/twhl-community/halflife-unified-sdk) repository for more information.
 
 Based on Quake 3's bspc tool: https://github.com/id-Software/Quake-III-Arena
 
