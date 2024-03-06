@@ -102,13 +102,21 @@
             </TabItem>
 
             <TabItem Header="Face-To-Brush Decompiler">
-                <Grid ColumnDefinitions="Auto">
-                    <Grid.RowDefinitions>
-                        <RowDefinition SharedSizeGroup="DecompilerTabItemHeight"/>
-                    </Grid.RowDefinitions>
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition SharedSizeGroup="DecompilerTabItemHeight"/>
+					</Grid.RowDefinitions>
 
-                    <Label Content="No Additional Options"/>
-                </Grid>
+					<Grid ColumnDefinitions="Auto, Auto, Auto, Auto"
+                      RowDefinitions="Auto, Auto, Auto, *">
+						<Label Grid.Column="0" Grid.Row="0" Content="General:"/>
+						
+						<CheckBox Grid.Column="0" Grid.Row="1"
+                                  Content="Ignore SKY/SOLID faces(outside)"
+                                  IsChecked="{Binding Settings.SkipSolidSkyLeafs}"/>
+
+					</Grid>
+				</Grid>
             </TabItem>
         </TabControl>
     </Grid>

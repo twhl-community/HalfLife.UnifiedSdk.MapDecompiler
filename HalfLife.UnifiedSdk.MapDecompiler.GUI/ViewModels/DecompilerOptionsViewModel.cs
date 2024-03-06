@@ -88,6 +88,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI.ViewModels
                 ApplyNullToGeneratedFaces = Settings.ApplyNullToGeneratedFaces,
                 AlwaysGenerateOriginBrushes = Settings.AlwaysGenerateOriginBrushes,
                 MergeBrushes = Settings.MergeBrushes,
+                SkipSolidSkyLeafs = Settings.SkipSolidSkyLeafs,
                 IncludeLiquids = Settings.IncludeLiquids,
                 BrushOptimization = Settings.BrushOptimization,
                 TriggerEntityWildcards = Settings.TriggerEntityWildcards.ToImmutableList()

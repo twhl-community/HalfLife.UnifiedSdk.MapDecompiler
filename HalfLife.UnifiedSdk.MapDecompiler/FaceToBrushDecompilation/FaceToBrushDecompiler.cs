@@ -26,6 +26,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
         private readonly Edges _bspEdges;
         private readonly List<Vector3> _bspVertices;
         private readonly Models _bspModels;
+        private readonly Leaves _bspLeaves;
+        private readonly LeafFaces _bspMarksurfs;
 
         private FaceToBrushDecompiler(ILogger logger, BspFile bspFile, DecompilerOptions options)
         {
@@ -42,6 +44,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             _bspEdges = _bspFile.Edges;
             _bspVertices = _bspFile.Vertices.Select(v => v.ToDouble()).ToList();
             _bspModels = _bspFile.Models;
+            _bspLeaves = _bspFile.Leaves;
+            _bspMarksurfs = _bspFile.LeafFaces;
         }
 
         public static MapFile Decompile(ILogger logger, BspFile bspFile, DecompilerOptions options, CancellationToken cancellationToken)
@@ -79,6 +83,11 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             };
 
             entities.AddRange(mapFile.Worldspawn.Children.Cast<MapEntity>());
+
+            if (_options.SkipSolidSkyLeafs)
+            {
+                _logger.Information("Skip CONTENTS_SKY CONTENTS_SOLID faces enabled.");
+            }
 
             foreach (var e in entities.Select((e, i) => new { Entity = e, Index = i }))
             {
@@ -157,25 +166,53 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
         private void RemoveBadSides(int modelNumber, List<BspSide> sides)
         {
-            int absoluteIndex = 0;
+            List<int> skip_solid_sides = new List<int>();
+            List<int> skip_sky_sides = new List<int>();
 
-            for (int i = 0; i < sides.Count;)
+            if (_options.SkipSolidSkyLeafs)
+            {
+                foreach (var leaf in _bspLeaves)
+                {
+                    if (leaf.Contents == Sledge.Formats.Bsp.Objects.Contents.Sky)
+                    {
+                        for (int i = leaf.FirstLeafFace; i < leaf.FirstLeafFace + leaf.NumLeafFaces; i++)
+                        {
+                            skip_sky_sides.Add(_bspMarksurfs[i]);
+                        }
+                    }
+                    else if (leaf.Contents == Sledge.Formats.Bsp.Objects.Contents.Solid)
+                    {
+                        for (int i = leaf.FirstLeafFace; i < leaf.FirstLeafFace + leaf.NumLeafFaces; i++)
+                        {
+                            skip_solid_sides.Add(_bspMarksurfs[i]);
+                        }
+                    }
+                }
+            }
+
+            for (int i = sides.Count - 1; i >= 0; i--)
             {
                 var side = sides[i];
 
-                if (side.Winding.Points.Count < 3)
+                if (skip_solid_sides.IndexOf(i) >= 0)
                 {
-                    _logger.Warning("Skipping model {ModelNumber} face {Index}: face has only collinear points",
-                            modelNumber, absoluteIndex);
-                    
+                    _logger.Information("Skipping model {ModelNumber} face {Index}: CONTENTS_SOLID",
+                            modelNumber, i);
                     sides.RemoveAt(i);
                 }
-                else
+                else if (skip_sky_sides.IndexOf(i) >= 0)
                 {
-                    ++i;
+                    _logger.Information("Skipping model {ModelNumber} face {Index}: CONTENTS_SKY",
+                            modelNumber, i);
+                    sides.RemoveAt(i);
                 }
+                else if (side.Winding.Points.Count < 3)
+                {
+                    _logger.Warning("Skipping model {ModelNumber} face {Index}: face has only collinear points",
+                            modelNumber, i);
 
-                ++absoluteIndex;
+                    sides.RemoveAt(i);
+                }
             }
         }
 

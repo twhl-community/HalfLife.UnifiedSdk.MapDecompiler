@@ -13,6 +13,8 @@ namespace HalfLife.UnifiedSdk.MapDecompiler
 
         public bool MergeBrushes { get; init; }
 
+        public bool SkipSolidSkyLeafs { get; init; }
+
         public bool IncludeLiquids { get; init; }
 
         public BrushOptimization BrushOptimization { get; init; } = BrushOptimization.BestTextureMatch;

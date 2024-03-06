@@ -108,6 +108,15 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.GUI
             set => this.RaiseAndSetIfChanged(ref _mergeBrushes, value);
         }
 
+        private bool _skipSolidSkyLeafs = false;
+
+        [DataMember]
+        public bool SkipSolidSkyLeafs
+        {
+            get => _skipSolidSkyLeafs;
+            set => this.RaiseAndSetIfChanged(ref _skipSolidSkyLeafs, value);
+        }
+
         private bool _includeLiquids = true;
 
         [DataMember]
