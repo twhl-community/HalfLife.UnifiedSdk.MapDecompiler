@@ -124,6 +124,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
             if (_options.AlwaysGenerateOriginBrushes || origin != Vector3.Zero)
             {
+                if (origin != Vector3.Zero)
+                {
+                    entity.SortedProperties.RemoveAll(item => item.Key.Equals("origin"));
+                }
                 entity.Children.Add(CreateOriginBrush(origin));
                 ++brushCount;
             }
