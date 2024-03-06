@@ -169,6 +169,9 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
             List<int> skip_solid_sides = new List<int>();
             List<int> skip_sky_sides = new List<int>();
 
+            int skipped_solid_sides = 0;
+            int skipped_sky_sides = 0;
+
             if (_options.SkipSolidSkyLeafs)
             {
                 foreach (var leaf in _bspLeaves)
@@ -196,24 +199,34 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.FaceToBrushDecompilation
 
                 if (skip_solid_sides.IndexOf(i) >= 0)
                 {
-                    _logger.Information("Skipping model {ModelNumber} face {Index}: CONTENTS_SOLID",
+                    _logger.Verbose("Skipping model {ModelNumber} face {Index}: CONTENTS_SOLID",
                             modelNumber, i);
                     sides.RemoveAt(i);
+                    skipped_solid_sides++;
                 }
                 else if (skip_sky_sides.IndexOf(i) >= 0)
                 {
-                    _logger.Information("Skipping model {ModelNumber} face {Index}: CONTENTS_SKY",
+                    _logger.Verbose("Skipping model {ModelNumber} face {Index}: CONTENTS_SKY",
                             modelNumber, i);
+
                     sides.RemoveAt(i);
+                    skipped_sky_sides++;
                 }
                 else if (side.Winding.Points.Count < 3)
                 {
-                    _logger.Warning("Skipping model {ModelNumber} face {Index}: face has only collinear points",
+                    _logger.Verbose("Skipping model {ModelNumber} face {Index}: face has only collinear points",
                             modelNumber, i);
 
                     sides.RemoveAt(i);
                 }
             }
+
+            if (skipped_sky_sides > 0)
+                _logger.Information("Model {ModelNumber}: skipped {Count} SKY faces",
+                           modelNumber, skipped_sky_sides);
+            if (skipped_solid_sides  > 0)
+                _logger.Information("Model {ModelNumber}: skipped {Count} SOLID faces",
+                           modelNumber, skipped_solid_sides);
         }
 
         private List<BspSide> MergeSides(int modelNumber, List<BspSide> sides)
