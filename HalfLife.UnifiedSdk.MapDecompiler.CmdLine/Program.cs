@@ -30,6 +30,10 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 getDefaultValue: () => true,
                 description: "Whether to merge brushes");
 
+            var skipSolidSkyLeafsOption = new Option<bool>("--skip-outside",
+                getDefaultValue: () => false,
+                description: "Skip SKY/SOLID leafs");
+
             var includeLiquidsOption = new Option<bool>("--include-liquids",
                 getDefaultValue: () => true,
                 description: "Whether to include brushes with liquid content types");
@@ -44,6 +48,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
             DecompilerOptionsBinder decompilerOptionsBinder = new(applyNullToGeneratedFacesOption,
                 alwaysGenerateOriginBrushesOption,
                 mergeBrushesOption,
+                skipSolidSkyLeafsOption,
                 includeLiquidsOption,
                 brushOptimizationOption,
                 triggerEntityClassNameWildcardsOption);
@@ -57,6 +62,7 @@ namespace HalfLife.UnifiedSdk.MapDecompiler.CmdLine
                 applyNullToGeneratedFacesOption,
                 alwaysGenerateOriginBrushesOption,
                 mergeBrushesOption,
+                skipSolidSkyLeafsOption,
                 includeLiquidsOption,
                 brushOptimizationOption,
                 triggerEntityClassNameWildcardsOption
